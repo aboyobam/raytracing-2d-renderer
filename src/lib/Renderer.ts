@@ -10,7 +10,7 @@ export default class Renderer {
     private readonly imageData: ImageData;
     private needsUpdate = false;
 
-    constructor(public readonly width: number, public readonly height: number, scale: number) {
+    constructor(public readonly width: number, public readonly height: number, scale: number, private readonly smoothing = true) {
         this.renderer = new OffscreenCanvas(width, height);
         this.rendererCtx = this.renderer.getContext("2d");
         this.canvas = document.createElement("canvas");
@@ -51,7 +51,7 @@ export default class Renderer {
             this.needsUpdate = false;
         }
         
-        this.canvasCtx.imageSmoothingEnabled = false;
+        this.canvasCtx.imageSmoothingEnabled = this.smoothing;
         this.canvasCtx.drawImage(this.renderer, 0, 0, this.canvas.width, this.canvas.height);
     }
 
@@ -97,7 +97,7 @@ export default class Renderer {
                     }
                 }
 
-                this.setPixel(x, y, 0, 0, (255 * (closest.angle / 180)));
+                this.setPixel(x, y, 0, 0, (256 * (closest.angle / 180)));
             }
         }
     }

@@ -24,11 +24,11 @@ export default {
   resolve: {
     extensions: ['.tsx', '.ts', '.js']
   },
-  /*devServer: {
+  devServer: {
     static: {
         directory: path.join(__dirname, 'dist'), // Serve content out of the 'dist' folder
     },
     compress: true, // Enable gzip compression
     port: 9000 // Set the port to 9000
-  }*/
+  }
 };
