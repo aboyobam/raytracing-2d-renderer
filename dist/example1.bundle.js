@@ -22,8 +22,6 @@ class Camera {
         this.fov = fov;
         this.aspectRatio = aspectRatio;
         this.near = near;
-        this.fov = fov;
-        this.aspectRatio = aspectRatio;
     }
 }
 exports["default"] = Camera;
@@ -261,22 +259,16 @@ const Raytracer_1 = __webpack_require__(/*! ./Raytracer */ "./src/lib/Raytracer.
 class Renderer {
     width;
     height;
-    canvas;
+    smoothing;
     renderer;
-    rendererCtx;
-    canvasCtx;
     imageData;
     needsUpdate = false;
-    constructor(width, height, scale) {
+    constructor(width, height, smoothing = true) {
         this.width = width;
         this.height = height;
+        this.smoothing = smoothing;
         this.renderer = new OffscreenCanvas(width, height);
-        this.rendererCtx = this.renderer.getContext("2d");
-        this.canvas = document.createElement("canvas");
-        this.canvasCtx = this.canvas.getContext("2d");
-        this.canvas.width = width * scale;
-        this.canvas.height = height * scale;
-        this.imageData = this.rendererCtx.getImageData(0, 0, width, height);
+        this.imageData = this.renderer.getContext("2d").getImageData(0, 0, width, height);
     }
     get pixels() {
         return this.imageData.data;
@@ -299,11 +291,15 @@ class Renderer {
     }
     draw() {
         if (this.needsUpdate) {
-            this.rendererCtx.putImageData(this.imageData, 0, 0);
+            self.postMessage({
+                type: "image",
+                image: this.imageData,
+                width: this.renderer.width,
+                height: this.renderer.height,
+                smoothing: this.smoothing
+            });
             this.needsUpdate = false;
         }
-        this.canvasCtx.imageSmoothingEnabled = false;
-        this.canvasCtx.drawImage(this.renderer, 0, 0, this.canvas.width, this.canvas.height);
     }
     render(camera, scene) {
         this.pixels.fill(256);
@@ -321,6 +317,7 @@ class Renderer {
         const xStep = topRight.sub(topLeft).multScalar(1 / this.width);
         const yStep = bottomLeft.sub(topLeft).multScalar(1 / this.height);
         const rc = new Raytracer_1.default(scene, camera.position);
+        let lastUpdate = performance.now();
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
                 const dir = topLeft
@@ -338,9 +335,28 @@ class Renderer {
                         closest = hit;
                     }
                 }
-                this.setPixel(x, y, 0, 0, (255 * (closest.angle / 180)));
+                this.setPixel(x, y, 0, 0, (256 * (closest.angle / 180)));
+                const now = performance.now();
+                if (lastUpdate < (now - 200)) {
+                    lastUpdate = now;
+                    self.postMessage({
+                        type: "image",
+                        image: this.imageData,
+                        width: this.renderer.width,
+                        height: this.renderer.height,
+                        smoothing: this.smoothing
+                    });
+                }
             }
         }
+        self.postMessage({
+            type: "image",
+            image: this.imageData,
+            width: this.renderer.width,
+            height: this.renderer.height,
+            smoothing: this.smoothing
+        });
+        // this.draw();
     }
 }
 exports["default"] = Renderer;
@@ -481,6 +497,43 @@ class CubeGeometry extends Geometry_1.default {
 exports["default"] = CubeGeometry;
 
 
+/***/ }),
+
+/***/ "./src/lib/setup.ts":
+/*!**************************!*\
+  !*** ./src/lib/setup.ts ***!
+  \**************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const Camera_1 = __webpack_require__(/*! ./Camera */ "./src/lib/Camera.ts");
+const Renderer_1 = __webpack_require__(/*! ./Renderer */ "./src/lib/Renderer.ts");
+const Scene_1 = __webpack_require__(/*! ./Scene */ "./src/lib/Scene.ts");
+let _buildScene;
+let _data;
+self.onmessage = ({ data }) => {
+    _data = data;
+    if (_buildScene) {
+        doSetup();
+    }
+};
+function setup(buildScene) {
+    _buildScene = buildScene;
+    if (_data) {
+        doSetup();
+    }
+}
+exports["default"] = setup;
+function doSetup() {
+    const scene = new Scene_1.default();
+    const renderer = new Renderer_1.default(_data.width, _data.height);
+    const camera = new Camera_1.default(_data.cameraFov, renderer.width / renderer.height, _data.cameraNear);
+    _buildScene({ scene, camera, renderer });
+    renderer.render(camera, scene);
+}
+
+
 /***/ })
 
 /******/ 	});
@@ -514,38 +567,28 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 var exports = __webpack_exports__;
-/*!*************************!*\
-  !*** ./src/example1.ts ***!
-  \*************************/
+/*!********************************!*\
+  !*** ./src/scenes/example1.ts ***!
+  \********************************/
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const Camera_1 = __webpack_require__(/*! ./lib/Camera */ "./src/lib/Camera.ts");
-const Material_1 = __webpack_require__(/*! ./lib/Material */ "./src/lib/Material.ts");
-const Mesh_1 = __webpack_require__(/*! ./lib/Mesh */ "./src/lib/Mesh.ts");
-const Renderer_1 = __webpack_require__(/*! ./lib/Renderer */ "./src/lib/Renderer.ts");
-const Scene_1 = __webpack_require__(/*! ./lib/Scene */ "./src/lib/Scene.ts");
-const Vector3_1 = __webpack_require__(/*! ./lib/Vector3 */ "./src/lib/Vector3.ts");
-const CubeGeometry_1 = __webpack_require__(/*! ./lib/geometries/CubeGeometry */ "./src/lib/geometries/CubeGeometry.ts");
-const scene = new Scene_1.default();
-const renderer = new Renderer_1.default(200, 160, 2);
-const camera = new Camera_1.default(45, renderer.width / renderer.height, 2);
-document.body.appendChild(renderer.canvas);
-const geo = new CubeGeometry_1.default(10, 10, 10);
-const mat = new Material_1.default();
-const mesh = new Mesh_1.default(geo, mat);
-mesh.position.set(0, 0, 30);
-scene.add(mesh);
-renderer.animate();
-mesh.rotate(new Vector3_1.default(0, 1, 0), 45);
-camera.target.set(0, 0, 1);
-renderer.render(camera, scene);
-setInterval(() => {
-    mesh.rotate(new Vector3_1.default(0, 1, 0), 10);
-    renderer.render(camera, scene);
-}, 200);
+const Material_1 = __webpack_require__(/*! @/Material */ "./src/lib/Material.ts");
+const Mesh_1 = __webpack_require__(/*! @/Mesh */ "./src/lib/Mesh.ts");
+const Vector3_1 = __webpack_require__(/*! @/Vector3 */ "./src/lib/Vector3.ts");
+const CubeGeometry_1 = __webpack_require__(/*! @/geometries/CubeGeometry */ "./src/lib/geometries/CubeGeometry.ts");
+const setup_1 = __webpack_require__(/*! @/setup */ "./src/lib/setup.ts");
+(0, setup_1.default)(({ scene, camera }) => {
+    const geo = new CubeGeometry_1.default(10, 10, 10);
+    const mat = new Material_1.default();
+    const mesh = new Mesh_1.default(geo, mat);
+    mesh.position.set(0, 0, 30);
+    scene.add(mesh);
+    mesh.rotate(new Vector3_1.default(0, 1, 0), 30);
+    camera.target.set(0, 0, 1);
+});
 
 })();
 
 /******/ })()
 ;
-//# sourceMappingURL=bundle.js.map
+//# sourceMappingURL=example1.bundle.js.map

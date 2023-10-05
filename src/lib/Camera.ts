@@ -5,8 +5,5 @@ export default class Camera {
     public readonly target = new Vector3(0, 0, 0);
     public readonly up = new Vector3(0, 1, 0);
 
-    constructor(public fov: number, public aspectRatio: number, public near: number) {
-        this.fov = fov;
-        this.aspectRatio = aspectRatio;
-    }
+    constructor(public fov: number, public aspectRatio: number, public near: number) {}
 }

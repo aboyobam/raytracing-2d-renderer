@@ -3,22 +3,18 @@ import Raytracer from "./Raytracer";
 import Scene from "./Scene";
 
 export default class Renderer {
-    public readonly canvas: HTMLCanvasElement;
     private readonly renderer: OffscreenCanvas;
-    private readonly rendererCtx: OffscreenCanvasRenderingContext2D;
-    private readonly canvasCtx: CanvasRenderingContext2D;
     private readonly imageData: ImageData;
     private needsUpdate = false;
 
-    constructor(public readonly width: number, public readonly height: number, scale: number, private readonly smoothing = true) {
+    constructor(
+        public readonly width: number,
+        public readonly height: number,
+        public readonly autoUpdate: boolean,
+        public readonly updateRate: number
+    ) {
         this.renderer = new OffscreenCanvas(width, height);
-        this.rendererCtx = this.renderer.getContext("2d");
-        this.canvas = document.createElement("canvas");
-        this.canvasCtx = this.canvas.getContext("2d");
-        this.canvas.width = width * scale;
-        this.canvas.height = height * scale;
-
-        this.imageData = this.rendererCtx.getImageData(0, 0, width, height);
+        this.imageData = this.renderer.getContext("2d").getImageData(0, 0, width, height);
     }
 
     private get pixels() {
@@ -47,12 +43,13 @@ export default class Renderer {
 
     draw() {
         if (this.needsUpdate) {
-            this.rendererCtx.putImageData(this.imageData, 0, 0);
+            self.postMessage({
+                type: "image",
+                image: this.imageData,
+            });
+
             this.needsUpdate = false;
         }
-        
-        this.canvasCtx.imageSmoothingEnabled = this.smoothing;
-        this.canvasCtx.drawImage(this.renderer, 0, 0, this.canvas.width, this.canvas.height);
     }
 
     render(camera: Camera, scene: Scene) {
@@ -77,6 +74,8 @@ export default class Renderer {
         
         const rc = new Raytracer(scene, camera.position);
 
+        let lastUpdate = performance.now();
+
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
                 const dir = topLeft
@@ -98,7 +97,28 @@ export default class Renderer {
                 }
 
                 this.setPixel(x, y, 0, 0, (256 * (closest.angle / 180)));
+
+                const now = performance.now();
+                if (lastUpdate < (now - this.updateRate)) {
+                    lastUpdate = now;
+
+                    if (this.autoUpdate) {
+                        self.postMessage({
+                            type: "image",
+                            image: this.imageData,
+                        });
+                    }
+                }
             }
+        }
+
+        if (this.autoUpdate) {
+            self.postMessage({
+                type: "image",
+                image: this.imageData,
+            });
+        } else {
+            this.draw();
         }
     }
 }

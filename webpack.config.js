@@ -1,19 +1,25 @@
 import path from "node:path";
 import URL from "node:url";
+import fs from "node:fs";
 
 const __filename = URL.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default {
-  entry: './src/example1.ts',
+  entry: {
+    main: './src/main.ts',
+    ...fs.readdirSync("./src/scenes")
+      .filter(file => file.endsWith(".ts"))
+      .reduce((acc, file) => (acc[file.slice(0, -3)] = './src/scenes/' + file, acc), {})
+  },
   output: {
-    filename: 'bundle.js',
+    filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist')
   },
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
+        test: /\.ts$/,
         use: 'ts-loader',
         exclude: /node_modules/
       }
@@ -22,7 +28,10 @@ export default {
   devtool: 'source-map',
   mode: "development",
   resolve: {
-    extensions: ['.tsx', '.ts', '.js']
+    extensions: ['.ts', '.js'],
+    alias: {
+      '@': path.resolve(__dirname, 'src/lib/')
+    }
   },
   devServer: {
     static: {
