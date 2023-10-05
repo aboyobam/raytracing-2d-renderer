@@ -512,6 +512,67 @@ exports["default"] = CubeGeometry;
 
 /***/ }),
 
+/***/ "./src/lib/parsers/OBJParser.ts":
+/*!**************************************!*\
+  !*** ./src/lib/parsers/OBJParser.ts ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const Face_1 = __webpack_require__(/*! @/Face */ "./src/lib/Face.ts");
+const Geometry_1 = __webpack_require__(/*! @/Geometry */ "./src/lib/Geometry.ts");
+const Vector3_1 = __webpack_require__(/*! @/Vector3 */ "./src/lib/Vector3.ts");
+class OBJParser {
+    static async parse(url) {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to load OBJ file from ${url}: ${response.statusText}`);
+        }
+        const objText = await response.text();
+        const lines = objText.split('\n');
+        const vertices = [];
+        const normals = [];
+        const faces = [];
+        for (const line of lines) {
+            const tokens = line.split(/\s+/);
+            const command = tokens[0];
+            switch (command) {
+                case 'v':
+                    vertices.push(new Vector3_1.default(parseFloat(tokens[1]), parseFloat(tokens[2]), parseFloat(tokens[3])));
+                    break;
+                case 'vn':
+                    normals.push(new Vector3_1.default(parseFloat(tokens[1]), parseFloat(tokens[2]), parseFloat(tokens[3])));
+                    break;
+                case 'f':
+                    const vertexIndices = [];
+                    const normalIndices = [];
+                    tokens.slice(1).forEach(token => {
+                        const [vertexIndex, , normalIndex] = token.split('/').map(Number);
+                        vertexIndices.push(vertexIndex - 1);
+                        normalIndices.push(normalIndex - 1);
+                    });
+                    // Triangulate the face if it has more than 3 vertices
+                    for (let i = 1; i < vertexIndices.length - 1; i++) {
+                        const faceVertices = [
+                            vertices[vertexIndices[0]],
+                            vertices[vertexIndices[i]],
+                            vertices[vertexIndices[i + 1]]
+                        ];
+                        const faceNormal = normals[normalIndices[0]]; // Adjust this as needed to handle per-vertex normals
+                        faces.push(new Face_1.default(faceVertices[0], faceVertices[1], faceVertices[2], faceNormal));
+                    }
+                    break;
+            }
+        }
+        return new Geometry_1.default(vertices, faces);
+    }
+}
+exports["default"] = OBJParser;
+
+
+/***/ }),
+
 /***/ "./src/lib/setup.ts":
 /*!**************************!*\
   !*** ./src/lib/setup.ts ***!
@@ -582,7 +643,7 @@ var __webpack_exports__ = {};
 (() => {
 var exports = __webpack_exports__;
 /*!********************************!*\
-  !*** ./src/scenes/example2.ts ***!
+  !*** ./src/scenes/example3.ts ***!
   \********************************/
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -590,22 +651,20 @@ const Material_1 = __webpack_require__(/*! @/Material */ "./src/lib/Material.ts"
 const Mesh_1 = __webpack_require__(/*! @/Mesh */ "./src/lib/Mesh.ts");
 const Vector3_1 = __webpack_require__(/*! @/Vector3 */ "./src/lib/Vector3.ts");
 const CubeGeometry_1 = __webpack_require__(/*! @/geometries/CubeGeometry */ "./src/lib/geometries/CubeGeometry.ts");
+const OBJParser_1 = __webpack_require__(/*! @/parsers/OBJParser */ "./src/lib/parsers/OBJParser.ts");
 const setup_1 = __webpack_require__(/*! @/setup */ "./src/lib/setup.ts");
-(0, setup_1.default)(({ scene, camera, renderer }) => {
-    const geo = new CubeGeometry_1.default(10, 10, 10);
-    const mat = new Material_1.default();
-    const mesh = new Mesh_1.default(geo, mat);
-    mesh.position.set(0, 0, 30);
+(0, setup_1.default)(async ({ scene, camera }) => {
+    const cube = new CubeGeometry_1.default(0.5, 0.5, 0.5);
+    const geo = await OBJParser_1.default.parse("suzanne.obj");
+    const mesh = new Mesh_1.default(geo, new Material_1.default(255, 0, 0));
+    mesh.position.set(0, 0, 4);
+    mesh.rotate(new Vector3_1.default(0, 1, 0), 135);
     scene.add(mesh);
     camera.target.set(0, 0, 1);
-    setInterval(() => {
-        mesh.rotate(new Vector3_1.default(0, 1, 0), 10);
-        renderer.render(camera, scene);
-    }, 200);
 });
 
 })();
 
 /******/ })()
 ;
-//# sourceMappingURL=example2.bundle.js.map
+//# sourceMappingURL=example3.bundle.js.map

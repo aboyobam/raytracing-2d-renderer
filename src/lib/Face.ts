@@ -1,3 +1,4 @@
+import Material from "./Material";
 import Vector3 from "./Vector3";
 
 export default class Face {
@@ -5,7 +6,8 @@ export default class Face {
         public readonly u: Vector3,
         public readonly v: Vector3,
         public readonly w: Vector3,
-        public readonly normal: Vector3
+        public readonly normal: Vector3,
+        public readonly material?: Material
     ) {};
 
     clone() {
@@ -13,7 +15,8 @@ export default class Face {
             this.u.clone(),
             this.v.clone(),
             this.w.clone(),
-            this.normal
+            this.normal,
+            this.material
         );
     }
 

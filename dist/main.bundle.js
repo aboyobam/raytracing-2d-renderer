@@ -11,13 +11,15 @@
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const config = {
-    file: 'example1',
+    file: 'example3',
     width: 500,
     height: 500,
     smoothing: false,
+    threads: 12,
     renderer: {
-        width: 1000,
-        height: 1000,
+        wireframe: 0,
+        width: 300,
+        height: 300,
         cameraFov: 45,
         cameraNear: 2
     }
@@ -58,31 +60,37 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 var exports = __webpack_exports__;
-/*!*********************!*\
-  !*** ./src/main.ts ***!
-  \*********************/
+/*!*************************!*\
+  !*** ./src/lib/main.ts ***!
+  \*************************/
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const config_1 = __webpack_require__(/*! ./config */ "./src/config.ts");
+const config_1 = __webpack_require__(/*! ../config */ "./src/config.ts");
+const renderer = new OffscreenCanvas(config_1.default.renderer.width, config_1.default.renderer.height);
+const rendererCtx = renderer.getContext("2d");
+const imageData = rendererCtx.getImageData(0, 0, config_1.default.renderer.width, config_1.default.renderer.height);
+const viewBuffer = new SharedArrayBuffer(config_1.default.renderer.width * config_1.default.renderer.height * 4);
 const canvas = document.createElement("canvas");
 canvas.width = config_1.default.width;
 canvas.height = config_1.default.height;
 const ctx = canvas.getContext("2d");
 document.body.appendChild(canvas);
-const worker = new Worker(config_1.default.file + ".bundle.js");
-worker.postMessage(config_1.default.renderer);
-worker.onmessage = (event) => {
-    if (event.data.type == "image") {
-        return draw(event.data);
-    }
-};
-const renderer = new OffscreenCanvas(config_1.default.renderer.width, config_1.default.renderer.height);
-const rendererCtx = renderer.getContext("2d");
-function draw({ image }) {
-    rendererCtx.putImageData(image, 0, 0);
+for (let mod = 0; mod < config_1.default.threads; mod++) {
+    const worker = new Worker(config_1.default.file + ".bundle.js");
+    worker.postMessage({
+        mod, total: config_1.default.threads,
+        config: config_1.default.renderer,
+        buffer: viewBuffer
+    });
+}
+function draw() {
+    imageData.data.set(new Uint8Array(viewBuffer));
+    rendererCtx.putImageData(imageData, 0, 0);
     ctx.imageSmoothingEnabled = config_1.default.smoothing;
     ctx.drawImage(renderer, 0, 0, canvas.width, canvas.height);
+    requestAnimationFrame(draw);
 }
+requestAnimationFrame(draw);
 
 })();
 

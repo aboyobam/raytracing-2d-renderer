@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 
 export default {
   entry: {
-    main: './src/main.ts',
+    main: './src/lib/main.ts',
     ...fs.readdirSync("./src/scenes")
       .filter(file => file.endsWith(".ts"))
       .reduce((acc, file) => (acc[file.slice(0, -3)] = './src/scenes/' + file, acc), {})
@@ -36,6 +36,10 @@ export default {
   devServer: {
     static: {
         directory: path.join(__dirname, 'dist'), // Serve content out of the 'dist' folder
+    },
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp"
     },
     compress: true, // Enable gzip compression
     port: 9000 // Set the port to 9000

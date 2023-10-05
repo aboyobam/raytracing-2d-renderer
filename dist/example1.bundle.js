@@ -42,15 +42,17 @@ class Face {
     v;
     w;
     normal;
-    constructor(u, v, w, normal) {
+    material;
+    constructor(u, v, w, normal, material) {
         this.u = u;
         this.v = v;
         this.w = w;
         this.normal = normal;
+        this.material = material;
     }
     ;
     clone() {
-        return new Face(this.u.clone(), this.v.clone(), this.w.clone(), this.normal);
+        return new Face(this.u.clone(), this.v.clone(), this.w.clone(), this.normal, this.material);
     }
     translate(v) {
         for (const s of this) {
@@ -105,7 +107,14 @@ class Material {
     r;
     g;
     b;
-    a = 256;
+    a;
+    constructor(r = 256, g = 256, b = 256, a = 256) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
+    }
+    ;
 }
 exports["default"] = Material;
 
@@ -195,12 +204,14 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 class Raytracer {
     scene;
     origin;
+    static EPSILON = 1e-7;
     constructor(scene, origin) {
         this.scene = scene;
         this.origin = origin;
     }
     ;
     *castRay(dir) {
+        // Möller–Trumbore
         for (const mesh of this.scene) {
             for (const origFace of mesh.geometry.faces) {
                 const face = origFace.clone().translate(mesh.worldPosition);
@@ -208,8 +219,7 @@ class Raytracer {
                 const edge2 = face.w.sub(face.u);
                 const h = dir.cross(edge2);
                 const a = edge1.dot(h);
-                const EPSILON = 0.0000001;
-                if (a > -EPSILON && a < EPSILON) {
+                if (a > -Raytracer.EPSILON && a < Raytracer.EPSILON) {
                     continue;
                 }
                 const f = 1.0 / a;
@@ -224,22 +234,34 @@ class Raytracer {
                     continue;
                 }
                 const t = f * edge2.dot(q);
-                if (t > EPSILON) {
-                    const intersectionPoint = this.origin.add(dir.multScalar(t));
+                if (t > Raytracer.EPSILON) {
+                    const point = this.origin.add(dir.multScalar(t));
                     const dotProduct = dir.dot(face.normal);
                     const clampedDotProduct = Math.max(-1, Math.min(1, dotProduct));
                     const angle = Math.acos(clampedDotProduct) * (180 / Math.PI);
-                    const distance = this.origin.sub(intersectionPoint).len();
-                    yield {
-                        angle,
-                        point: intersectionPoint,
-                        distance,
-                        mesh,
-                        face
-                    };
+                    const distance = this.origin.sub(point).len();
+                    const dist1 = this.distancePointToSegment(point, face.u, face.v);
+                    const dist2 = this.distancePointToSegment(point, face.v, face.w);
+                    const dist3 = this.distancePointToSegment(point, face.w, face.u);
+                    const edgeDist = Math.min(dist1, dist2, dist3);
+                    yield { angle, point, distance, mesh, face, edgeDist };
                 }
             }
         }
+    }
+    distancePointToSegment(point, a, b) {
+        const ab = b.sub(a);
+        const ap = point.sub(a);
+        const bp = point.sub(b);
+        const e = ap.dot(ab);
+        if (e <= 0) {
+            return ap.len();
+        }
+        const f = ab.dot(ab);
+        if (e >= f) {
+            return bp.len();
+        }
+        return Math.sqrt(ap.dot(ap) - (e * e) / f);
     }
 }
 exports["default"] = Raytracer;
@@ -255,51 +277,39 @@ exports["default"] = Raytracer;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const Material_1 = __webpack_require__(/*! ./Material */ "./src/lib/Material.ts");
 const Raytracer_1 = __webpack_require__(/*! ./Raytracer */ "./src/lib/Raytracer.ts");
 class Renderer {
-    width;
-    height;
-    smoothing;
+    config;
+    buffer;
+    mod;
+    total;
     renderer;
     imageData;
     needsUpdate = false;
-    constructor(width, height, smoothing = true) {
-        this.width = width;
-        this.height = height;
-        this.smoothing = smoothing;
-        this.renderer = new OffscreenCanvas(width, height);
-        this.imageData = this.renderer.getContext("2d").getImageData(0, 0, width, height);
+    pixels;
+    constructor(config, buffer, mod, total) {
+        this.config = config;
+        this.buffer = buffer;
+        this.mod = mod;
+        this.total = total;
+        this.renderer = new OffscreenCanvas(config.width, config.height);
+        this.imageData = this.renderer.getContext("2d").getImageData(0, 0, config.width, config.height);
+        const sharedUint8Array = new Uint8ClampedArray(buffer);
+        sharedUint8Array.set(this.imageData.data);
+        this.pixels = sharedUint8Array;
     }
-    get pixels() {
-        return this.imageData.data;
-    }
-    setPixel(x, y, r, g, b) {
-        const index = (y * this.width + x) * 4;
+    // private get pixels() {
+    //     return this.imageData.data;
+    // }
+    setPixel(x, y, r, g, b, a = 256) {
+        const index = (y * this.config.width + x) * 4;
         const pixels = this.pixels;
         pixels[index + 0] = r;
         pixels[index + 1] = g;
         pixels[index + 2] = b;
-        pixels[index + 3] = 256;
+        pixels[index + 3] = a;
         this.needsUpdate = true;
-    }
-    animate() {
-        const loop = () => {
-            this.draw();
-            requestAnimationFrame(loop);
-        };
-        requestAnimationFrame(loop);
-    }
-    draw() {
-        if (this.needsUpdate) {
-            self.postMessage({
-                type: "image",
-                image: this.imageData,
-                width: this.renderer.width,
-                height: this.renderer.height,
-                smoothing: this.smoothing
-            });
-            this.needsUpdate = false;
-        }
     }
     render(camera, scene) {
         this.pixels.fill(256);
@@ -314,49 +324,52 @@ class Renderer {
         const topLeft = center.add(halfUp).sub(halfRight);
         const topRight = center.add(halfUp).add(halfRight);
         const bottomLeft = center.sub(halfUp).sub(halfRight);
-        const xStep = topRight.sub(topLeft).multScalar(1 / this.width);
-        const yStep = bottomLeft.sub(topLeft).multScalar(1 / this.height);
+        const xStep = topRight.sub(topLeft).multScalar(1 / this.config.width);
+        const yStep = bottomLeft.sub(topLeft).multScalar(1 / this.config.height);
         const rc = new Raytracer_1.default(scene, camera.position);
-        let lastUpdate = performance.now();
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
+        for (let y = this.mod; y < this.config.height; y += this.total) {
+            for (let x = 0; x < this.config.width; x++) {
                 const dir = topLeft
                     .add(xStep.multScalar(x))
                     .add(yStep.multScalar(y))
                     .sub(camera.position)
                     .norm();
-                const [first, ...hits] = rc.castRay(dir);
-                if (!first) {
+                const hits = Array.from(rc.castRay(dir));
+                if (!hits.length) {
                     continue;
                 }
-                let closest = first;
-                for (const hit of hits) {
-                    if (hit.distance < closest.distance) {
-                        closest = hit;
+                if (this.config.wireframe) {
+                    for (const hit of hits) {
+                        if (hit.edgeDist < this.config.wireframe) {
+                            const { r, g, b } = hit.face.material ?? hit.mesh.material;
+                            this.setPixel(x, y, r, g, b);
+                        }
                     }
                 }
-                this.setPixel(x, y, 0, 0, (256 * (closest.angle / 180)));
-                const now = performance.now();
-                if (lastUpdate < (now - 200)) {
-                    lastUpdate = now;
-                    self.postMessage({
-                        type: "image",
-                        image: this.imageData,
-                        width: this.renderer.width,
-                        height: this.renderer.height,
-                        smoothing: this.smoothing
-                    });
+                else {
+                    const sorted = hits.sort((a, b) => a.distance - b.distance);
+                    let strength = 0;
+                    const colors = [];
+                    for (const hit of sorted) {
+                        const localAlpha = (hit.face.material ?? hit.mesh.material).a / 256;
+                        const localStrength = (1 - strength) * localAlpha;
+                        strength += localStrength;
+                        colors.push([(hit.face.material ?? hit.mesh.material), localStrength, hit.angle / 180]);
+                        if (strength > 0.999) {
+                            break;
+                        }
+                    }
+                    const { r, g, b, a } = colors.reduce((acc, [{ r, g, b, a }, s, q]) => {
+                        acc.r += r * q * s;
+                        acc.g += g * q * s;
+                        acc.b += b * q * s;
+                        acc.a += s * 256;
+                        return acc;
+                    }, new Material_1.default(0, 0, 0, 0));
+                    this.setPixel(x, y, r, g, b);
                 }
             }
         }
-        self.postMessage({
-            type: "image",
-            image: this.imageData,
-            width: this.renderer.width,
-            height: this.renderer.height,
-            smoothing: this.smoothing
-        });
-        // this.draw();
     }
 }
 exports["default"] = Renderer;
@@ -525,12 +538,13 @@ function setup(buildScene) {
     }
 }
 exports["default"] = setup;
-function doSetup() {
+async function doSetup() {
     const scene = new Scene_1.default();
-    const renderer = new Renderer_1.default(_data.width, _data.height);
-    const camera = new Camera_1.default(_data.cameraFov, renderer.width / renderer.height, _data.cameraNear);
-    _buildScene({ scene, camera, renderer });
+    const renderer = new Renderer_1.default(_data.config, _data.buffer, _data.mod, _data.total);
+    const camera = new Camera_1.default(_data.config.cameraFov, renderer.config.width / renderer.config.height, _data.config.cameraNear);
+    await _buildScene({ scene, camera, renderer });
     renderer.render(camera, scene);
+    self.close();
 }
 
 
@@ -579,11 +593,12 @@ const CubeGeometry_1 = __webpack_require__(/*! @/geometries/CubeGeometry */ "./s
 const setup_1 = __webpack_require__(/*! @/setup */ "./src/lib/setup.ts");
 (0, setup_1.default)(({ scene, camera }) => {
     const geo = new CubeGeometry_1.default(10, 10, 10);
-    const mat = new Material_1.default();
+    const mat = new Material_1.default(256, 0, 0, 150);
     const mesh = new Mesh_1.default(geo, mat);
     mesh.position.set(0, 0, 30);
     scene.add(mesh);
     mesh.rotate(new Vector3_1.default(0, 1, 0), 30);
+    mesh.rotate(new Vector3_1.default(1, 0, 0), 30);
     camera.target.set(0, 0, 1);
 });
 

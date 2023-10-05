@@ -1,6 +1,3 @@
 export default class Material {
-    r: number;
-    g: number;
-    b: number;
-    a: number = 256;
+    constructor(public r = 256, public g = 256, public b = 256, public a = 256) {};
 }

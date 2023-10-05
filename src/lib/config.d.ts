@@ -3,12 +3,12 @@ export default interface AppConfig {
     width: number;
     height: number;
     smoothing: boolean;
+    threads: number;
     renderer: {
         width: number;
         height: number;
         cameraFov: number;
         cameraNear: number;
-        autoUpdate: boolean;
-        updateRate: number;
+        wireframe?: number;
     };
 }

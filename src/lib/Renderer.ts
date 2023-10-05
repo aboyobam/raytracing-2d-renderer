@@ -1,55 +1,41 @@
 import Camera from "./Camera";
+import Material from "./Material";
 import Raytracer from "./Raytracer";
 import Scene from "./Scene";
+import type AppConfig from "./config";
 
 export default class Renderer {
     private readonly renderer: OffscreenCanvas;
     private readonly imageData: ImageData;
     private needsUpdate = false;
+    private readonly pixels: Uint8ClampedArray;
 
     constructor(
-        public readonly width: number,
-        public readonly height: number,
-        public readonly autoUpdate: boolean,
-        public readonly updateRate: number
+        public readonly config: AppConfig['renderer'],
+        public readonly buffer: SharedArrayBuffer,
+        public readonly mod: number,
+        public readonly total: number
     ) {
-        this.renderer = new OffscreenCanvas(width, height);
-        this.imageData = this.renderer.getContext("2d").getImageData(0, 0, width, height);
+        this.renderer = new OffscreenCanvas(config.width, config.height);
+        this.imageData = this.renderer.getContext("2d").getImageData(0, 0, config.width, config.height);
+        const sharedUint8Array = new Uint8ClampedArray(buffer);
+        sharedUint8Array.set(this.imageData.data);
+        this.pixels = sharedUint8Array;
     }
 
-    private get pixels() {
-        return this.imageData.data;
-    }
+    // private get pixels() {
+    //     return this.imageData.data;
+    // }
 
-    setPixel(x: number, y: number, r: number, g: number, b: number) {
-        const index = (y * this.width + x) * 4;
+    setPixel(x: number, y: number, r: number, g: number, b: number, a = 256) {
+        const index = (y * this.config.width + x) * 4;
         const pixels = this.pixels;
 
         pixels[index + 0] = r;
         pixels[index + 1] = g;
         pixels[index + 2] = b;
-        pixels[index + 3] = 256;
+        pixels[index + 3] = a;
         this.needsUpdate = true;
-    }
-
-    animate() {
-        const loop = () => {
-            this.draw();
-            requestAnimationFrame(loop);
-        }
-
-        requestAnimationFrame(loop);
-    }
-
-    draw() {
-        if (this.needsUpdate) {
-            self.postMessage({
-                type: "image",
-                image: this.imageData,
-            });
-
-            this.needsUpdate = false;
-        }
     }
 
     render(camera: Camera, scene: Scene) {
@@ -69,56 +55,60 @@ export default class Renderer {
         const topRight = center.add(halfUp).add(halfRight);
         const bottomLeft = center.sub(halfUp).sub(halfRight);
 
-        const xStep = topRight.sub(topLeft).multScalar(1 / this.width);
-        const yStep = bottomLeft.sub(topLeft).multScalar(1 / this.height);
+        const xStep = topRight.sub(topLeft).multScalar(1 / this.config.width);
+        const yStep = bottomLeft.sub(topLeft).multScalar(1 / this.config.height);
         
         const rc = new Raytracer(scene, camera.position);
 
-        let lastUpdate = performance.now();
-
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
+        for (let y = this.mod; y < this.config.height; y += this.total) {
+            for (let x = 0; x < this.config.width; x++) {
                 const dir = topLeft
-                            .add(xStep.multScalar(x))
-                            .add(yStep.multScalar(y))
-                            .sub(camera.position)
-                            .norm();
+                    .add(xStep.multScalar(x))
+                    .add(yStep.multScalar(y))
+                    .sub(camera.position)
+                    .norm();
 
-                const [first, ...hits] = rc.castRay(dir);
-                if (!first) {
+                const hits = Array.from(rc.castRay(dir));
+                
+                if (!hits.length) {
                     continue;
                 }
 
-                let closest = first;
-                for (const hit of hits) {
-                    if (hit.distance < closest.distance) {
-                        closest = hit;
+                if (this.config.wireframe) {
+                    for (const hit of hits) {
+                        if (hit.edgeDist < this.config.wireframe) {
+                            const { r, g, b } = hit.face.material ?? hit.mesh.material;
+                            this.setPixel(x, y, r, g, b);
+                        }
                     }
-                }
+                } else {
+                    const sorted = hits.sort((a, b) => a.distance - b.distance);
 
-                this.setPixel(x, y, 0, 0, (256 * (closest.angle / 180)));
+                    let strength = 0;
+                    const colors: [Material, number, number][] = [];
 
-                const now = performance.now();
-                if (lastUpdate < (now - this.updateRate)) {
-                    lastUpdate = now;
+                    for (const hit of sorted) {
+                        const localAlpha = (hit.face.material ?? hit.mesh.material).a / 256;
+                        const localStrength = (1 - strength) * localAlpha;
+                        strength += localStrength;
+                        colors.push([(hit.face.material ?? hit.mesh.material), localStrength, hit.angle / 180]);
 
-                    if (this.autoUpdate) {
-                        self.postMessage({
-                            type: "image",
-                            image: this.imageData,
-                        });
+                        if (strength > 0.999) {
+                            break;
+                        }
                     }
+
+                    const { r, g, b, a }: Material = colors.reduce((acc, [{ r, g, b, a }, s, q]) => {
+                        acc.r += r * q * s; 
+                        acc.g += g * q * s; 
+                        acc.b += b * q * s; 
+                        acc.a += s * 256;
+                        return acc;
+                    }, new Material(0, 0, 0, 0));
+                    
+                    this.setPixel(x, y, r, g, b);
                 }
             }
-        }
-
-        if (this.autoUpdate) {
-            self.postMessage({
-                type: "image",
-                image: this.imageData,
-            });
-        } else {
-            this.draw();
         }
     }
 }

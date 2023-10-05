@@ -1,17 +1,17 @@
-import AppConfig from "@/config";
+import type AppConfig from "@/config";
 
 const config: AppConfig = {
-    file: 'example1',
+    file: 'example3',
     width: 500,
     height: 500,
     smoothing: false,
+    threads: 12,
     renderer: {
-        width: 1000,
-        height: 1000,
+        wireframe: 0,
+        width: 300,
+        height: 300,
         cameraFov: 45,
-        cameraNear: 2,
-        autoUpdate: true,
-        updateRate: 250
+        cameraNear: 2
     }
 }
 
