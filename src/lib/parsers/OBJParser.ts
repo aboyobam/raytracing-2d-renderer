@@ -60,6 +60,6 @@ export default class OBJParser {
             }
         }
 
-        return new Geometry(vertices, faces);
+        return new Geometry(vertices, faces.filter(f => f.u && f.v && f.w));
     }
 }

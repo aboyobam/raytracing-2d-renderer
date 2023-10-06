@@ -39,8 +39,6 @@ export default class Renderer {
     }
 
     render(camera: Camera, scene: Scene) {
-        this.pixels.fill(256);
-
         const planeHeight = 2 * Math.tan((camera.fov / 2) * (Math.PI / 180)) * camera.near;
         const planeWidth = planeHeight * camera.aspectRatio;
 
@@ -58,19 +56,18 @@ export default class Renderer {
         const xStep = topRight.sub(topLeft).multScalar(1 / this.config.width);
         const yStep = bottomLeft.sub(topLeft).multScalar(1 / this.config.height);
         
-        const rc = new Raytracer(scene, camera.position);
+        const rc = new Raytracer(scene, camera);
 
         for (let y = this.mod; y < this.config.height; y += this.total) {
             for (let x = 0; x < this.config.width; x++) {
                 const dir = topLeft
                     .add(xStep.multScalar(x))
                     .add(yStep.multScalar(y))
-                    .sub(camera.position)
-                    .norm();
 
                 const hits = Array.from(rc.castRay(dir));
                 
                 if (!hits.length) {
+                    this.setPixel(x, y, 256, 256, 256);
                     continue;
                 }
 
@@ -106,7 +103,7 @@ export default class Renderer {
                         return acc;
                     }, new Material(0, 0, 0, 0));
                     
-                    this.setPixel(x, y, r, g, b);
+                    this.setPixel(x, y, r, g, b, a);
                 }
             }
         }

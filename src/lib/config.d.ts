@@ -9,6 +9,8 @@ export default interface AppConfig {
         height: number;
         cameraFov: number;
         cameraNear: number;
+        qtEnabled: boolean;
+        qtMaxSize?: number;
         wireframe?: number;
     };
 }

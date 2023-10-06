@@ -18,10 +18,12 @@ const config = {
     threads: 12,
     renderer: {
         wireframe: 0,
-        width: 300,
-        height: 300,
+        width: 500,
+        height: 500,
         cameraFov: 45,
-        cameraNear: 2
+        cameraNear: 2,
+        qtEnabled: true,
+        qtMaxSize: 24
     }
 };
 exports["default"] = config;

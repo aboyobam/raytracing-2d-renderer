@@ -15,12 +15,18 @@ export default class CubeGeometry extends Geometry {
         }
         
         super(vertecies, [
-            new Face(vertecies[0], vertecies[1], vertecies[4], new Vector3(0, -1, 0)), new Face(vertecies[1], vertecies[4], vertecies[5], new Vector3(0, -1, 0)), // bottom
-            new Face(vertecies[2], vertecies[3], vertecies[6], new Vector3(0, 1, 0)), new Face(vertecies[3], vertecies[6], vertecies[7], new Vector3(0, 1, 0)), // top
-            new Face(vertecies[0], vertecies[1], vertecies[2], new Vector3(-1, 0, 0)), new Face(vertecies[1], vertecies[2], vertecies[3], new Vector3(-1, 0, 0)), // left
-            new Face(vertecies[4], vertecies[5], vertecies[6], new Vector3(1, 0, 0)), new Face(vertecies[5], vertecies[6], vertecies[7], new Vector3(1, 0, 0)), // right
-            new Face(vertecies[0], vertecies[2], vertecies[4], new Vector3(0, 0, -1)), new Face(vertecies[2], vertecies[4], vertecies[6], new Vector3(0, 0, -1)), // front
-            new Face(vertecies[1], vertecies[3], vertecies[5], new Vector3(0, 0, 1)), new Face(vertecies[3], vertecies[5], vertecies[7], new Vector3(0, 0, 1)), // back
+            new Face(vertecies[2], vertecies[3], vertecies[6], new Vector3(0, 1, 0), null, "cube_top_1"),
+            new Face(vertecies[3], vertecies[6], vertecies[7], new Vector3(0, 1, 0), null, "cube_top_2"), // top
+            new Face(vertecies[0], vertecies[1], vertecies[4], new Vector3(0, -1, 0), null, "cube_bottom_1"),
+            new Face(vertecies[1], vertecies[4], vertecies[5], new Vector3(0, -1, 0), null, "cube_bottom_2"), // bottom
+            new Face(vertecies[0], vertecies[1], vertecies[2], new Vector3(-1, 0, 0), null, "cube_left_1"),
+            new Face(vertecies[1], vertecies[2], vertecies[3], new Vector3(-1, 0, 0), null, "cube_left_2"), // left
+            new Face(vertecies[4], vertecies[5], vertecies[6], new Vector3(1, 0, 0), null, "cube_right_1"),
+            new Face(vertecies[5], vertecies[6], vertecies[7], new Vector3(1, 0, 0), null, "cube_right_2"), // right
+            new Face(vertecies[0], vertecies[2], vertecies[4], new Vector3(0, 0, -1), null, "cube_front_1"),
+            new Face(vertecies[2], vertecies[4], vertecies[6], new Vector3(0, 0, -1), null, "cube_front_2"), // front
+            new Face(vertecies[1], vertecies[3], vertecies[5], new Vector3(0, 0, 1), null, "cube_back_1"),
+            new Face(vertecies[3], vertecies[5], vertecies[7], new Vector3(0, 0, 1), null, "cube_back_2"), // back
         ]);
     }
 }

@@ -33,26 +33,36 @@ exports["default"] = Camera;
 /*!*************************!*\
   !*** ./src/lib/Face.ts ***!
   \*************************/
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const Vector3_1 = __webpack_require__(/*! ./Vector3 */ "./src/lib/Vector3.ts");
 class Face {
     u;
     v;
     w;
     normal;
     material;
-    constructor(u, v, w, normal, material) {
+    static counter = 0;
+    name;
+    constructor(u, v, w, normal, material, name) {
         this.u = u;
         this.v = v;
         this.w = w;
         this.normal = normal;
         this.material = material;
+        this.name = (Face.counter++) + "_" + (name || "Face");
     }
     ;
     clone() {
-        return new Face(this.u.clone(), this.v.clone(), this.w.clone(), this.normal, this.material);
+        return new Face(this.u.clone(), this.v.clone(), this.w.clone(), this.normal, this.material, this.name + "_cloned");
+    }
+    getBoundingBox() {
+        return [
+            new Vector3_1.default(Math.min(this.u.x, this.v.x, this.w.x), Math.min(this.u.y, this.v.y, this.w.y), Math.min(this.u.z, this.v.z, this.w.z)),
+            new Vector3_1.default(Math.max(this.u.x, this.v.x, this.w.x), Math.max(this.u.y, this.v.y, this.w.y), Math.max(this.u.z, this.v.z, this.w.z))
+        ];
     }
     translate(v) {
         for (const s of this) {
@@ -197,56 +207,72 @@ exports["default"] = Mesh;
 /*!******************************!*\
   !*** ./src/lib/Raytracer.ts ***!
   \******************************/
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const QuadTree_1 = __webpack_require__(/*! ./optimizer/QuadTree */ "./src/lib/optimizer/QuadTree.ts");
+const setup_1 = __webpack_require__(/*! ./setup */ "./src/lib/setup.ts");
 class Raytracer {
     scene;
-    origin;
+    camera;
     static EPSILON = 1e-7;
-    constructor(scene, origin) {
+    qt;
+    constructor(scene, camera) {
         this.scene = scene;
-        this.origin = origin;
+        this.camera = camera;
+        if (setup_1.rendererConfig.qtEnabled) {
+            this.qt = QuadTree_1.default.ofScene(scene, camera);
+        }
     }
-    ;
     *castRay(dir) {
-        // Möller–Trumbore
-        for (const mesh of this.scene) {
-            for (const origFace of mesh.geometry.faces) {
-                const face = origFace.clone().translate(mesh.worldPosition);
-                const edge1 = face.v.sub(face.u);
-                const edge2 = face.w.sub(face.u);
-                const h = dir.cross(edge2);
-                const a = edge1.dot(h);
-                if (a > -Raytracer.EPSILON && a < Raytracer.EPSILON) {
-                    continue;
-                }
-                const f = 1.0 / a;
-                const s = this.origin.sub(face.u);
-                const u = f * s.dot(h);
-                if (u < 0.0 || u > 1.0) {
-                    continue;
-                }
-                const q = s.cross(edge1);
-                const v = f * dir.dot(q);
-                if (v < 0.0 || u + v > 1.0) {
-                    continue;
-                }
-                const t = f * edge2.dot(q);
-                if (t > Raytracer.EPSILON) {
-                    const point = this.origin.add(dir.multScalar(t));
-                    const dotProduct = dir.dot(face.normal);
-                    const clampedDotProduct = Math.max(-1, Math.min(1, dotProduct));
-                    const angle = Math.acos(clampedDotProduct) * (180 / Math.PI);
-                    const distance = this.origin.sub(point).len();
-                    const dist1 = this.distancePointToSegment(point, face.u, face.v);
-                    const dist2 = this.distancePointToSegment(point, face.v, face.w);
-                    const dist3 = this.distancePointToSegment(point, face.w, face.u);
-                    const edgeDist = Math.min(dist1, dist2, dist3);
-                    yield { angle, point, distance, mesh, face, edgeDist };
+        const normDir = dir.sub(this.camera.position).norm();
+        if (setup_1.rendererConfig.qtEnabled) {
+            for (const [mesh, face] of this.qt.intersects(dir)) {
+                yield* this.checkRay(mesh, face, normDir);
+            }
+        }
+        else {
+            for (const mesh of this.scene) {
+                for (const origFace of mesh.geometry.faces) {
+                    const face = origFace.clone().translate(mesh.worldPosition);
+                    yield* this.checkRay(mesh, face, normDir);
                 }
             }
+        }
+    }
+    *checkRay(mesh, face, normDir) {
+        // Möller–Trumbore
+        const edge1 = face.v.sub(face.u);
+        const edge2 = face.w.sub(face.u);
+        const h = normDir.cross(edge2);
+        const a = edge1.dot(h);
+        if (a > -Raytracer.EPSILON && a < Raytracer.EPSILON) {
+            return;
+        }
+        const f = 1.0 / a;
+        const s = this.camera.position.sub(face.u);
+        const u = f * s.dot(h);
+        if (u < 0.0 || u > 1.0) {
+            return;
+        }
+        const q = s.cross(edge1);
+        const v = f * normDir.dot(q);
+        if (v < 0.0 || u + v > 1.0) {
+            return;
+        }
+        const t = f * edge2.dot(q);
+        if (t > Raytracer.EPSILON) {
+            const point = this.camera.position.add(normDir.multScalar(t));
+            const dotProduct = normDir.dot(face.normal);
+            const clampedDotProduct = Math.max(-1, Math.min(1, dotProduct));
+            const angle = Math.acos(clampedDotProduct) * (180 / Math.PI);
+            const distance = this.camera.position.sub(point).len();
+            const dist1 = this.distancePointToSegment(point, face.u, face.v);
+            const dist2 = this.distancePointToSegment(point, face.v, face.w);
+            const dist3 = this.distancePointToSegment(point, face.w, face.u);
+            const edgeDist = Math.min(dist1, dist2, dist3);
+            yield { angle, point, distance, mesh, face, edgeDist };
         }
     }
     distancePointToSegment(point, a, b) {
@@ -312,7 +338,6 @@ class Renderer {
         this.needsUpdate = true;
     }
     render(camera, scene) {
-        this.pixels.fill(256);
         const planeHeight = 2 * Math.tan((camera.fov / 2) * (Math.PI / 180)) * camera.near;
         const planeWidth = planeHeight * camera.aspectRatio;
         const forward = camera.target.norm();
@@ -326,16 +351,15 @@ class Renderer {
         const bottomLeft = center.sub(halfUp).sub(halfRight);
         const xStep = topRight.sub(topLeft).multScalar(1 / this.config.width);
         const yStep = bottomLeft.sub(topLeft).multScalar(1 / this.config.height);
-        const rc = new Raytracer_1.default(scene, camera.position);
+        const rc = new Raytracer_1.default(scene, camera);
         for (let y = this.mod; y < this.config.height; y += this.total) {
             for (let x = 0; x < this.config.width; x++) {
                 const dir = topLeft
                     .add(xStep.multScalar(x))
-                    .add(yStep.multScalar(y))
-                    .sub(camera.position)
-                    .norm();
+                    .add(yStep.multScalar(y));
                 const hits = Array.from(rc.castRay(dir));
                 if (!hits.length) {
+                    this.setPixel(x, y, 256, 256, 256);
                     continue;
                 }
                 if (this.config.wireframe) {
@@ -366,7 +390,7 @@ class Renderer {
                         acc.a += s * 256;
                         return acc;
                     }, new Material_1.default(0, 0, 0, 0));
-                    this.setPixel(x, y, r, g, b);
+                    this.setPixel(x, y, r, g, b, a);
                 }
             }
         }
@@ -413,6 +437,9 @@ class Vector3 {
     x;
     y;
     z;
+    static midpoint(a, b) {
+        return a.add(b).multScalar(1 / 2);
+    }
     constructor(x = 0, y = 0, z = 0) {
         this.x = x;
         this.y = y;
@@ -427,6 +454,11 @@ class Vector3 {
     }
     clone() {
         return new Vector3(this.x, this.y, this.z);
+    }
+    copy(v) {
+        this.x = v.x;
+        this.y = v.y;
+        this.z = v.z;
     }
     add(v) {
         return new Vector3(this.x + v.x, this.y + v.y, this.z + v.z);
@@ -495,12 +527,18 @@ class CubeGeometry extends Geometry_1.default {
             }
         }
         super(vertecies, [
-            new Face_1.default(vertecies[0], vertecies[1], vertecies[4], new Vector3_1.default(0, -1, 0)), new Face_1.default(vertecies[1], vertecies[4], vertecies[5], new Vector3_1.default(0, -1, 0)),
-            new Face_1.default(vertecies[2], vertecies[3], vertecies[6], new Vector3_1.default(0, 1, 0)), new Face_1.default(vertecies[3], vertecies[6], vertecies[7], new Vector3_1.default(0, 1, 0)),
-            new Face_1.default(vertecies[0], vertecies[1], vertecies[2], new Vector3_1.default(-1, 0, 0)), new Face_1.default(vertecies[1], vertecies[2], vertecies[3], new Vector3_1.default(-1, 0, 0)),
-            new Face_1.default(vertecies[4], vertecies[5], vertecies[6], new Vector3_1.default(1, 0, 0)), new Face_1.default(vertecies[5], vertecies[6], vertecies[7], new Vector3_1.default(1, 0, 0)),
-            new Face_1.default(vertecies[0], vertecies[2], vertecies[4], new Vector3_1.default(0, 0, -1)), new Face_1.default(vertecies[2], vertecies[4], vertecies[6], new Vector3_1.default(0, 0, -1)),
-            new Face_1.default(vertecies[1], vertecies[3], vertecies[5], new Vector3_1.default(0, 0, 1)), new Face_1.default(vertecies[3], vertecies[5], vertecies[7], new Vector3_1.default(0, 0, 1)), // back
+            new Face_1.default(vertecies[2], vertecies[3], vertecies[6], new Vector3_1.default(0, 1, 0), null, "cube_top_1"),
+            new Face_1.default(vertecies[3], vertecies[6], vertecies[7], new Vector3_1.default(0, 1, 0), null, "cube_top_2"),
+            new Face_1.default(vertecies[0], vertecies[1], vertecies[4], new Vector3_1.default(0, -1, 0), null, "cube_bottom_1"),
+            new Face_1.default(vertecies[1], vertecies[4], vertecies[5], new Vector3_1.default(0, -1, 0), null, "cube_bottom_2"),
+            new Face_1.default(vertecies[0], vertecies[1], vertecies[2], new Vector3_1.default(-1, 0, 0), null, "cube_left_1"),
+            new Face_1.default(vertecies[1], vertecies[2], vertecies[3], new Vector3_1.default(-1, 0, 0), null, "cube_left_2"),
+            new Face_1.default(vertecies[4], vertecies[5], vertecies[6], new Vector3_1.default(1, 0, 0), null, "cube_right_1"),
+            new Face_1.default(vertecies[5], vertecies[6], vertecies[7], new Vector3_1.default(1, 0, 0), null, "cube_right_2"),
+            new Face_1.default(vertecies[0], vertecies[2], vertecies[4], new Vector3_1.default(0, 0, -1), null, "cube_front_1"),
+            new Face_1.default(vertecies[2], vertecies[4], vertecies[6], new Vector3_1.default(0, 0, -1), null, "cube_front_2"),
+            new Face_1.default(vertecies[1], vertecies[3], vertecies[5], new Vector3_1.default(0, 0, 1), null, "cube_back_1"),
+            new Face_1.default(vertecies[3], vertecies[5], vertecies[7], new Vector3_1.default(0, 0, 1), null, "cube_back_2"), // back
         ]);
         this.width = width;
         this.height = height;
@@ -508,6 +546,172 @@ class CubeGeometry extends Geometry_1.default {
     }
 }
 exports["default"] = CubeGeometry;
+
+
+/***/ }),
+
+/***/ "./src/lib/optimizer/QuadNode.ts":
+/*!***************************************!*\
+  !*** ./src/lib/optimizer/QuadNode.ts ***!
+  \***************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const Vector3_1 = __webpack_require__(/*! @/Vector3 */ "./src/lib/Vector3.ts");
+const QuadTree_1 = __webpack_require__(/*! ./QuadTree */ "./src/lib/optimizer/QuadTree.ts");
+class QuadNode {
+    tree;
+    corners;
+    entries = [];
+    children = [];
+    constructor(tree, corners) {
+        this.tree = tree;
+        this.corners = corners;
+    }
+    get topRight() { return this.corners[0]; }
+    ;
+    get bottomRight() { return this.corners[1]; }
+    ;
+    get bottomLeft() { return this.corners[2]; }
+    ;
+    get topLeft() { return this.corners[3]; }
+    ;
+    overlaps(vertex) {
+        const normal = this.bottomLeft.sub(this.topLeft).cross(this.topRight.sub(this.topLeft)).norm();
+        const d = this.topLeft.dot(normal);
+        const t = (d - this.tree.camera.position.dot(normal)) / vertex.dot(normal);
+        const intersection = this.tree.camera.position.add(vertex.multScalar(t));
+        const withinX = Math.min(this.topLeft.x, this.bottomRight.x) <= intersection.x && intersection.x <= Math.max(this.topLeft.x, this.bottomRight.x);
+        const withinY = Math.min(this.topLeft.y, this.bottomRight.y) <= intersection.y && intersection.y <= Math.max(this.topLeft.y, this.bottomRight.y);
+        const withinZ = Math.min(this.topLeft.z, this.bottomRight.z) <= intersection.z && intersection.z <= Math.max(this.topLeft.z, this.bottomRight.z);
+        return withinX && withinY && withinZ;
+    }
+    overlapsFace(face) {
+        const normal = this.bottomLeft.sub(this.topLeft).cross(this.topRight.sub(this.topLeft)).norm();
+        const [min, max] = face.getBoundingBox();
+        const vertex = Vector3_1.default.midpoint(min, max);
+        const d = this.topLeft.dot(normal);
+        const t = (d - this.tree.camera.position.dot(normal)) / vertex.dot(normal);
+        const intersection = this.tree.camera.position.add(vertex.multScalar(t));
+        const [m, x] = face.clone().translate(intersection.sub(vertex)).getBoundingBox();
+        const withinX = Math.min(this.topLeft.x, this.bottomRight.x) <= x.x && m.x <= Math.max(this.topLeft.x, this.bottomRight.x);
+        const withinY = Math.min(this.topLeft.y, this.bottomRight.y) <= x.y && m.y <= Math.max(this.topLeft.y, this.bottomRight.y);
+        const withinZ = Math.min(this.topLeft.z, this.bottomRight.z) <= x.z && m.z <= Math.max(this.topLeft.z, this.bottomRight.z);
+        return withinX && withinY && withinZ;
+    }
+    insert(mesh, face) {
+        if (this.children.length) {
+            for (const child of this.children) {
+                child.insert(mesh, face);
+            }
+            return;
+        }
+        if (this.overlapsFace(face)) {
+            const size = this.entries.push([mesh, face]);
+            if (size >= QuadTree_1.default.MAX_COUNT) {
+                this.subdivide();
+            }
+            return;
+        }
+    }
+    subdivide() {
+        const [topRight, bottomRight, bottomLeft, topLeft] = this.corners;
+        const topMid = Vector3_1.default.midpoint(topRight, topLeft);
+        const rightMid = Vector3_1.default.midpoint(topRight, bottomRight);
+        const bottomMid = Vector3_1.default.midpoint(bottomRight, bottomLeft);
+        const leftMid = Vector3_1.default.midpoint(topLeft, bottomLeft);
+        const center = Vector3_1.default.midpoint(Vector3_1.default.midpoint(topMid, bottomMid), Vector3_1.default.midpoint(rightMid, leftMid));
+        this.children.push(new QuadNode(this.tree, [topRight, rightMid, center, topMid]), new QuadNode(this.tree, [rightMid, bottomRight, bottomMid, center]), new QuadNode(this.tree, [center, bottomMid, bottomLeft, leftMid]), new QuadNode(this.tree, [topMid, center, leftMid, topLeft]));
+    }
+    *intersects(dir, seen) {
+        if (!this.overlaps(dir)) {
+            return;
+        }
+        yield* this.entries;
+        for (const child of this.children) {
+            yield* child.intersects(dir, seen);
+        }
+    }
+    print(indent = 0) {
+        const sep = "  ";
+        const parts = [];
+        parts.push("Conners:");
+        parts.push(sep + `topLeft: (${this.topLeft.x.toFixed(3)}, ${this.topLeft.y.toFixed(3)}, ${this.topLeft.z.toFixed(3)})`);
+        parts.push(sep + `topLeft: (${this.topRight.x.toFixed(3)}, ${this.topRight.y.toFixed(3)}, ${this.topRight.z.toFixed(3)})`);
+        parts.push(sep + `topLeft: (${this.bottomLeft.x.toFixed(3)}, ${this.bottomLeft.y.toFixed(3)}, ${this.bottomLeft.z.toFixed(3)})`);
+        parts.push(sep + `topLeft: (${this.bottomRight.x.toFixed(3)}, ${this.bottomRight.y.toFixed(3)}, ${this.bottomRight.z.toFixed(3)})`);
+        if (this.entries.length) {
+            parts.push("Entries:");
+            for (const entry of this.entries) {
+                parts.push(sep + entry[1].name);
+            }
+        }
+        if (this.children.length && this.children.some(child => child.entries.length)) {
+            parts.push("Children:");
+            for (const child of this.children) {
+                parts.push(child.print(indent + 1));
+            }
+        }
+        return parts.map(p => sep.repeat(indent) + p).join("\n");
+    }
+}
+exports["default"] = QuadNode;
+
+
+/***/ }),
+
+/***/ "./src/lib/optimizer/QuadTree.ts":
+/*!***************************************!*\
+  !*** ./src/lib/optimizer/QuadTree.ts ***!
+  \***************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const QuadNode_1 = __webpack_require__(/*! ./QuadNode */ "./src/lib/optimizer/QuadNode.ts");
+class QuadTree {
+    camera;
+    static MAX_COUNT;
+    root;
+    static ofScene(scene, camera) {
+        const qt = new QuadTree(camera);
+        for (const mesh of scene) {
+            qt.insert(mesh);
+        }
+        return qt;
+    }
+    constructor(camera) {
+        this.camera = camera;
+        const planeHeight = 2 * Math.tan((camera.fov / 2) * (Math.PI / 180)) * camera.near;
+        const planeWidth = planeHeight * camera.aspectRatio;
+        const forward = camera.target.norm();
+        const right = camera.up.cross(forward).norm();
+        const up = forward.cross(right).norm();
+        const center = camera.position.add(forward.multScalar(camera.near));
+        const halfUp = up.multScalar(planeHeight / 2);
+        const halfRight = right.multScalar(planeWidth / 2);
+        this.root = new QuadNode_1.default(this, [
+            center.add(halfUp).add(halfRight),
+            center.sub(halfUp).add(halfRight),
+            center.sub(halfUp).sub(halfRight),
+            center.add(halfUp).sub(halfRight), // tl
+        ]);
+    }
+    insert(mesh) {
+        for (const origFace of mesh.geometry.faces) {
+            const face = origFace.clone().translate(mesh.worldPosition);
+            this.root.insert(mesh, face);
+        }
+    }
+    *intersects(dir) {
+        yield* this.root.intersects(dir, new Set);
+    }
+    print() {
+        console.log(this.root.print());
+    }
+}
+exports["default"] = QuadTree;
 
 
 /***/ }),
@@ -520,13 +724,18 @@ exports["default"] = CubeGeometry;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.rendererConfig = void 0;
 const Camera_1 = __webpack_require__(/*! ./Camera */ "./src/lib/Camera.ts");
 const Renderer_1 = __webpack_require__(/*! ./Renderer */ "./src/lib/Renderer.ts");
 const Scene_1 = __webpack_require__(/*! ./Scene */ "./src/lib/Scene.ts");
+const QuadTree_1 = __webpack_require__(/*! ./optimizer/QuadTree */ "./src/lib/optimizer/QuadTree.ts");
 let _buildScene;
 let _data;
+exports.rendererConfig = {};
 self.onmessage = ({ data }) => {
     _data = data;
+    Object.assign(exports.rendererConfig, _data.config);
+    QuadTree_1.default.MAX_COUNT = _data.config.qtMaxSize;
     if (_buildScene) {
         doSetup();
     }
@@ -542,7 +751,7 @@ async function doSetup() {
     const scene = new Scene_1.default();
     const renderer = new Renderer_1.default(_data.config, _data.buffer, _data.mod, _data.total);
     const camera = new Camera_1.default(_data.config.cameraFov, renderer.config.width / renderer.config.height, _data.config.cameraNear);
-    await _buildScene({ scene, camera, renderer });
+    await _buildScene({ scene, camera, renderer, config: _data.config });
     renderer.render(camera, scene);
     self.close();
 }

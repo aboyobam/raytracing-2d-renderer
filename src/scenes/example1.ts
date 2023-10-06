@@ -8,7 +8,7 @@ setup(({ scene, camera }) => {
     const geo = new CubeGeometry(10, 10, 10);
     const mat = new Material(256, 0, 0, 150);
     const mesh = new Mesh(geo, mat);
-    mesh.position.set(0, 0, 30);
+    mesh.position.set(-2, -0, 30);
     scene.add(mesh);
     
     mesh.rotate(new Vector3(0, 1, 0), 30);

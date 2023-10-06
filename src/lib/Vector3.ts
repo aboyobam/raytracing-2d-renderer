@@ -1,4 +1,8 @@
 export default class Vector3 {
+    static midpoint(a: Vector3, b: Vector3): Vector3 {
+        return a.add(b).multScalar(1 / 2);
+    }
+    
     constructor(public x: number = 0, public y: number = 0, public z: number = 0) {};
 
     set(x: number, y: number, z: number) {
@@ -10,6 +14,12 @@ export default class Vector3 {
 
     clone() {
         return new Vector3(this.x, this.y, this.z);
+    }
+
+    copy(v: Vector3) {
+        this.x = v.x;
+        this.y = v.y;
+        this.z = v.z;
     }
 
     add(v: Vector3) {

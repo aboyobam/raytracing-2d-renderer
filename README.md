@@ -1,6 +1,7 @@
 # Raytracing 2D Renderer
 
 ![](https://github.com/aboyobam/raytracing-2d-renderer/blob/master/preview.gif)
+![](https://github.com/aboyobam/raytracing-2d-renderer/blob/master/preview2.gif)
 
 Written in strict typescript.
 
