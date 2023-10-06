@@ -4,7 +4,6 @@ import Camera from "@/Camera";
 import Scene from "@/Scene";
 import Vector3 from "@/Vector3";
 import Face from "@/Face";
-import { rendererConfig } from "@/setup";
 
 export type MeshAndFace = [Mesh, Face];
 

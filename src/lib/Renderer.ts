@@ -7,7 +7,6 @@ import type AppConfig from "./config";
 export default class Renderer {
     private readonly renderer: OffscreenCanvas;
     private readonly imageData: ImageData;
-    private needsUpdate = false;
     private readonly pixels: Uint8ClampedArray;
 
     constructor(
@@ -23,10 +22,6 @@ export default class Renderer {
         this.pixels = sharedUint8Array;
     }
 
-    // private get pixels() {
-    //     return this.imageData.data;
-    // }
-
     setPixel(x: number, y: number, r: number, g: number, b: number, a = 256) {
         const index = (y * this.config.width + x) * 4;
         const pixels = this.pixels;
@@ -35,7 +30,6 @@ export default class Renderer {
         pixels[index + 1] = g;
         pixels[index + 2] = b;
         pixels[index + 3] = a;
-        this.needsUpdate = true;
     }
 
     render(camera: Camera, scene: Scene) {
