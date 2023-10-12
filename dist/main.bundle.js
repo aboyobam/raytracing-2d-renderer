@@ -11,11 +11,11 @@
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const config = {
-    file: 'blender-scene',
+    file: 'porsche',
     width: 500,
     height: 500,
     smoothing: true,
-    threads: 10,
+    threads: 8,
     renderer: {
         threadSync: true,
         wireframe: 0,
@@ -24,7 +24,7 @@ const config = {
         cameraFov: 45,
         cameraNear: 2,
         qtEnabled: true,
-        qtMaxSize: 512,
+        qtMaxSize: 256,
     }
 };
 exports["default"] = config;

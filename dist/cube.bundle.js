@@ -145,18 +145,17 @@ exports["default"] = Material;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const Vector3_1 = __webpack_require__(/*! ./Vector3 */ "./src/lib/Vector3.ts");
-class Mesh {
+const Object3D_1 = __webpack_require__(/*! ./Object3D */ "./src/lib/Object3D.ts");
+class Mesh extends Object3D_1.default {
     geometry;
     material;
     constructor(geometry, material) {
+        super();
         this.geometry = geometry;
         this.material = material;
     }
     ;
-    position = new Vector3_1.default(0, 0, 0);
     children = [];
-    parent;
     add(mesh) {
         mesh.parent = this;
         this.children.push(mesh);
@@ -195,6 +194,24 @@ class Mesh {
             yield* child;
         }
     }
+}
+exports["default"] = Mesh;
+
+
+/***/ }),
+
+/***/ "./src/lib/Object3D.ts":
+/*!*****************************!*\
+  !*** ./src/lib/Object3D.ts ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const Vector3_1 = __webpack_require__(/*! ./Vector3 */ "./src/lib/Vector3.ts");
+class Object3D {
+    parent;
+    position = new Vector3_1.default(0, 0, 0);
     get worldPosition() {
         if (this.parent) {
             return this.parent.worldPosition.add(this.position);
@@ -204,7 +221,7 @@ class Mesh {
         }
     }
 }
-exports["default"] = Mesh;
+exports["default"] = Object3D;
 
 
 /***/ }),
@@ -229,7 +246,7 @@ class Raytracer {
         this.camera = camera;
         if (setup_1.rendererConfig.qtEnabled) {
             this.qt = QuadTree_1.default.ofScene(scene, camera);
-            // this.qt.print();
+            this.qt.print();
         }
     }
     *castRay(dir) {
@@ -355,7 +372,7 @@ class Renderer {
                     .add(yStep.multScalar(y));
                 const hits = Array.from(rc.castRay(dir));
                 if (!hits.length) {
-                    this.setPixel(x, y, 256, 256, 256);
+                    this.setPixel(x, y, 200, 200, 200);
                     continue;
                 }
                 if (this.config.wireframe) {
@@ -401,14 +418,18 @@ exports["default"] = Renderer;
 /*!**************************!*\
   !*** ./src/lib/Scene.ts ***!
   \**************************/
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-class Scene {
+const Object3D_1 = __webpack_require__(/*! ./Object3D */ "./src/lib/Object3D.ts");
+class Scene extends Object3D_1.default {
     meshes = [];
     add(...objs) {
-        this.meshes.push(...objs);
+        for (const obj of objs) {
+            this.meshes.push(obj);
+            obj.parent = this;
+        }
     }
     *[Symbol.iterator]() {
         for (const mesh of this.meshes) {
@@ -498,6 +519,54 @@ exports["default"] = Vector3;
 
 /***/ }),
 
+/***/ "./src/lib/geometries/CubeGeometry.ts":
+/*!********************************************!*\
+  !*** ./src/lib/geometries/CubeGeometry.ts ***!
+  \********************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const Face_1 = __webpack_require__(/*! ../Face */ "./src/lib/Face.ts");
+const Geometry_1 = __webpack_require__(/*! ../Geometry */ "./src/lib/Geometry.ts");
+const Vector3_1 = __webpack_require__(/*! ../Vector3 */ "./src/lib/Vector3.ts");
+class CubeGeometry extends Geometry_1.default {
+    width;
+    height;
+    depth;
+    constructor(width, height, depth) {
+        const vertecies = [];
+        for (const x of [-0.5, 0.5]) {
+            for (const y of [-0.5, 0.5]) {
+                for (const z of [-0.5, 0.5]) {
+                    vertecies.push(new Vector3_1.default(width * x, height * y, depth * z));
+                }
+            }
+        }
+        super(vertecies, [
+            new Face_1.default(vertecies[2], vertecies[3], vertecies[6], new Vector3_1.default(0, 1, 0), null, "cube_top_1"),
+            new Face_1.default(vertecies[3], vertecies[6], vertecies[7], new Vector3_1.default(0, 1, 0), null, "cube_top_2"),
+            new Face_1.default(vertecies[0], vertecies[1], vertecies[4], new Vector3_1.default(0, -1, 0), null, "cube_bottom_1"),
+            new Face_1.default(vertecies[1], vertecies[4], vertecies[5], new Vector3_1.default(0, -1, 0), null, "cube_bottom_2"),
+            new Face_1.default(vertecies[0], vertecies[1], vertecies[2], new Vector3_1.default(-1, 0, 0), null, "cube_left_1"),
+            new Face_1.default(vertecies[1], vertecies[2], vertecies[3], new Vector3_1.default(-1, 0, 0), null, "cube_left_2"),
+            new Face_1.default(vertecies[4], vertecies[5], vertecies[6], new Vector3_1.default(1, 0, 0), null, "cube_right_1"),
+            new Face_1.default(vertecies[5], vertecies[6], vertecies[7], new Vector3_1.default(1, 0, 0), null, "cube_right_2"),
+            new Face_1.default(vertecies[0], vertecies[2], vertecies[4], new Vector3_1.default(0, 0, -1), null, "cube_front_1"),
+            new Face_1.default(vertecies[2], vertecies[4], vertecies[6], new Vector3_1.default(0, 0, -1), null, "cube_front_2"),
+            new Face_1.default(vertecies[1], vertecies[3], vertecies[5], new Vector3_1.default(0, 0, 1), null, "cube_back_1"),
+            new Face_1.default(vertecies[3], vertecies[5], vertecies[7], new Vector3_1.default(0, 0, 1), null, "cube_back_2"), // back
+        ]);
+        this.width = width;
+        this.height = height;
+        this.depth = depth;
+    }
+}
+exports["default"] = CubeGeometry;
+
+
+/***/ }),
+
 /***/ "./src/lib/optimizer/QuadNode.ts":
 /*!***************************************!*\
   !*** ./src/lib/optimizer/QuadNode.ts ***!
@@ -543,32 +612,54 @@ class QuadNode {
         const t = (d - this.tree.camera.position.dot(normal)) / vertex.dot(normal);
         const intersection = this.tree.camera.position.add(vertex.multScalar(t));
         const [m, x] = face.clone().translate(intersection.sub(vertex)).getBoundingBox();
-        // const withinX = Math.min(this.topLeft.x, this.bottomRight.x) <= x.x && m.x <= Math.max(this.topLeft.x, this.bottomRight.x);
-        // const withinY = Math.min(this.topLeft.y, this.bottomRight.y) <= x.y && m.y <= Math.max(this.topLeft.y, this.bottomRight.y);
-        // const withinZ = Math.min(this.topLeft.z, this.bottomRight.z) <= x.z && m.z <= Math.max(this.topLeft.z, this.bottomRight.z);
-        const withinX = (m.x - 0.00001) <= intersection.x && (x.x + 0.00001) >= intersection.x;
-        const withinY = (m.y - 0.00001) <= intersection.y && (x.y + 0.00001) >= intersection.y;
-        const withinZ = (m.z - 0.00001) <= intersection.z && (x.z + 0.00001) >= intersection.z;
+        const withinX = Math.min(this.topLeft.x, this.bottomRight.x) <= x.x && m.x <= Math.max(this.topLeft.x, this.bottomRight.x);
+        const withinY = Math.min(this.topLeft.y, this.bottomRight.y) <= x.y && m.y <= Math.max(this.topLeft.y, this.bottomRight.y);
+        const withinZ = Math.min(this.topLeft.z, this.bottomRight.z) <= x.z && m.z <= Math.max(this.topLeft.z, this.bottomRight.z);
+        // const withinX = (m.x - 0.00001) <= intersection.x && (x.x + 0.00001) >= intersection.x;
+        // const withinY = (m.y - 0.00001) <= intersection.y && (x.y + 0.00001) >= intersection.y;
+        // const withinZ = (m.z - 0.00001) <= intersection.z && (x.z + 0.00001) >= intersection.z;
         const matches = withinX && withinY && withinZ;
-        if (!matches) {
-            console.log(m, x, intersection);
-        }
         return matches;
     }
     insert(mesh, face) {
         if (this.children.length) {
+            let allMatched = true;
+            let oneMatched = false;
             for (const child of this.children) {
-                child.insert(mesh, face);
+                const matched = child.insert(mesh, face);
+                oneMatched ||= matched;
+                if (!matched) {
+                    allMatched = false;
+                }
             }
-            return;
+            if (allMatched) {
+                this.entries.push([mesh, face]);
+                for (const child of this.children) {
+                    const index = child.entries.findIndex(([_, iFace]) => face === iFace);
+                    if (index > -1) {
+                        child.entries.splice(index, 1);
+                    }
+                }
+            }
+            return oneMatched;
         }
         if (this.overlapsFace(face)) {
             const size = this.entries.push([mesh, face]);
             if (size >= QuadTree_1.default.MAX_COUNT) {
                 this.subdivide();
             }
-            return;
+            return true;
         }
+        /*if (this.overlaps(face.u) || this.overlaps(face.w) || this.overlaps(face.v)) {
+            const size = this.entries.push([mesh, face]);
+
+            if (size >= QuadTree.MAX_COUNT) {
+                this.subdivide();
+            }
+
+            return true;
+        }*/
+        return false;
     }
     subdivide() {
         const [topRight, bottomRight, bottomLeft, topLeft] = this.corners;
@@ -598,8 +689,13 @@ class QuadNode {
         parts.push(sep + `topLeft: (${this.bottomRight.x.toFixed(3)}, ${this.bottomRight.y.toFixed(3)}, ${this.bottomRight.z.toFixed(3)})`);
         if (this.entries.length) {
             parts.push("Entries:");
-            for (const entry of this.entries) {
-                parts.push(sep + entry[1].name);
+            if (this.entries.length > 10) {
+                parts.push(sep + this.entries.length + " entries");
+            }
+            else {
+                for (const entry of this.entries) {
+                    parts.push(sep + entry[1].name);
+                }
             }
         }
         if (this.children.length && this.children.some(child => child.entries.length)) {
@@ -646,12 +742,11 @@ class QuadTree {
         const center = camera.position.add(forward.multScalar(camera.near));
         const halfUp = up.multScalar(planeHeight / 2);
         const halfRight = right.multScalar(planeWidth / 2);
-        this.root = new QuadNode_1.default(this, [
-            center.add(halfUp).add(halfRight),
-            center.sub(halfUp).add(halfRight),
-            center.sub(halfUp).sub(halfRight),
-            center.add(halfUp).sub(halfRight), // tl
-        ]);
+        const topLeft = center.add(halfUp).sub(halfRight);
+        const topRight = center.add(halfUp).add(halfRight);
+        const bottomLeft = center.sub(halfUp).sub(halfRight);
+        const bottomRight = center.sub(halfUp).add(halfRight);
+        this.root = new QuadNode_1.default(this, [topRight, bottomRight, bottomLeft, topLeft]);
     }
     insert(mesh) {
         for (const origFace of mesh.geometry.faces) {
@@ -667,104 +762,6 @@ class QuadTree {
     }
 }
 exports["default"] = QuadTree;
-
-
-/***/ }),
-
-/***/ "./src/lib/parsers/OBJParser.ts":
-/*!**************************************!*\
-  !*** ./src/lib/parsers/OBJParser.ts ***!
-  \**************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const Face_1 = __webpack_require__(/*! @/Face */ "./src/lib/Face.ts");
-const Geometry_1 = __webpack_require__(/*! @/Geometry */ "./src/lib/Geometry.ts");
-const Material_1 = __webpack_require__(/*! @/Material */ "./src/lib/Material.ts");
-const Vector3_1 = __webpack_require__(/*! @/Vector3 */ "./src/lib/Vector3.ts");
-class OBJParser {
-    static async parse(url) {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Failed to load OBJ file from ${url}: ${response.statusText}`);
-        }
-        const objText = await response.text();
-        const lines = objText.split('\n');
-        const vertices = [];
-        const normals = [];
-        const faces = [];
-        let currentMaterial = null;
-        const materials = {};
-        for (const line of lines) {
-            const tokens = line.split(/\s+/);
-            const command = tokens[0];
-            if (command === 'mtllib') {
-                await this.loadMaterials(tokens[1], materials);
-            }
-            if (command === 'usemtl') {
-                currentMaterial = materials[tokens[1]] || null;
-            }
-            switch (command) {
-                case 'v':
-                    vertices.push(new Vector3_1.default(parseFloat(tokens[1]), parseFloat(tokens[2]), parseFloat(tokens[3])));
-                    break;
-                case 'vn':
-                    normals.push(new Vector3_1.default(parseFloat(tokens[1]), parseFloat(tokens[2]), parseFloat(tokens[3])));
-                    break;
-                case 'f':
-                    const vertexIndices = [];
-                    const normalIndices = [];
-                    tokens.slice(1).forEach(token => {
-                        const [vertexIndex, , normalIndex] = token.split('/').map(Number);
-                        vertexIndices.push(vertexIndex - 1);
-                        normalIndices.push(normalIndex - 1);
-                    });
-                    // Triangulate the face if it has more than 3 vertices
-                    for (let i = 1; i < vertexIndices.length - 1; i++) {
-                        const faceVertices = [
-                            vertices[vertexIndices[0]],
-                            vertices[vertexIndices[i]],
-                            vertices[vertexIndices[i + 1]]
-                        ];
-                        const faceNormal = normals[normalIndices[0]]; // Adjust this as needed to handle per-vertex normals
-                        faces.push(new Face_1.default(faceVertices[0], faceVertices[1], faceVertices[2], faceNormal, currentMaterial));
-                    }
-                    break;
-            }
-        }
-        return new Geometry_1.default(vertices, faces.filter(f => f.u && f.v && f.w));
-    }
-    static async loadMaterials(url, materials) {
-        const response = await fetch(url);
-        if (!response.ok) {
-            console.error(`Failed to load MTL file from ${url}: ${response.statusText}`);
-            return;
-        }
-        const mtlText = await response.text();
-        const lines = mtlText.split('\n');
-        let currentMaterialName = null;
-        for (const line of lines) {
-            const tokens = line.split(/\s+/);
-            const command = tokens[0];
-            switch (command) {
-                case 'newmtl':
-                    currentMaterialName = tokens[1];
-                    break;
-                case 'Kd':
-                    if (currentMaterialName) {
-                        const r = Math.floor(parseFloat(tokens[1]) * 255);
-                        const g = Math.floor(parseFloat(tokens[2]) * 255);
-                        const b = Math.floor(parseFloat(tokens[3]) * 255);
-                        const a = 255; // alpha is always 255 for now
-                        materials[currentMaterialName] = new Material_1.default(r, g, b, a, currentMaterialName);
-                    }
-                    break;
-            }
-        }
-    }
-}
-exports["default"] = OBJParser;
 
 
 /***/ }),
@@ -822,6 +819,8 @@ async function doSetup() {
             });
         });
     }
+    scene.position.copy(camera.position.multScalar(-1));
+    camera.position.set(0, 0, 0);
     renderer.render(camera, scene);
     self.close();
 }
@@ -860,21 +859,24 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 var exports = __webpack_exports__;
-/*!********************************!*\
-  !*** ./src/scenes/example4.ts ***!
-  \********************************/
+/*!****************************!*\
+  !*** ./src/scenes/cube.ts ***!
+  \****************************/
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const Material_1 = __webpack_require__(/*! @/Material */ "./src/lib/Material.ts");
 const Mesh_1 = __webpack_require__(/*! @/Mesh */ "./src/lib/Mesh.ts");
-const OBJParser_1 = __webpack_require__(/*! @/parsers/OBJParser */ "./src/lib/parsers/OBJParser.ts");
+const Vector3_1 = __webpack_require__(/*! @/Vector3 */ "./src/lib/Vector3.ts");
+const CubeGeometry_1 = __webpack_require__(/*! @/geometries/CubeGeometry */ "./src/lib/geometries/CubeGeometry.ts");
 const setup_1 = __webpack_require__(/*! @/setup */ "./src/lib/setup.ts");
-(0, setup_1.default)(async ({ scene, camera }) => {
-    const geo = await OBJParser_1.default.parse("senna.obj");
-    const mesh = new Mesh_1.default(geo, new Material_1.default());
-    mesh.position.set(-0.5, 0.5, 6);
-    Material_1.default.all['Mat.2'].a = 150;
+(0, setup_1.default)(({ scene, camera }) => {
+    const geo = new CubeGeometry_1.default(10, 10, 10);
+    const mat = new Material_1.default(256, 0, 0, 120);
+    const mesh = new Mesh_1.default(geo, mat);
+    mesh.position.set(-2, -0, 30);
     scene.add(mesh);
+    mesh.rotate(new Vector3_1.default(0, 1, 0), 30);
+    mesh.rotate(new Vector3_1.default(1, 0, 0), 30);
     camera.target.set(0, 0, 1);
 });
 
@@ -882,4 +884,4 @@ const setup_1 = __webpack_require__(/*! @/setup */ "./src/lib/setup.ts");
 
 /******/ })()
 ;
-//# sourceMappingURL=example4.bundle.js.map
+//# sourceMappingURL=cube.bundle.js.map

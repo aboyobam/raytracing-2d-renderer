@@ -55,7 +55,7 @@ export default class Renderer {
                 const hits = Array.from(rc.castRay(dir));
                 
                 if (!hits.length) {
-                    this.setPixel(x, y, 256, 256, 256);
+                    this.setPixel(x, y, 200, 200, 200);
                     continue;
                 }
 

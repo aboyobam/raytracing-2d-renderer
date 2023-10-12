@@ -1,11 +1,11 @@
 import type AppConfig from "@/config";
 
 const config: AppConfig = {
-    file: 'blender-scene',
+    file: 'porsche',
     width: 500,
     height: 500,
     smoothing: true,
-    threads: 10,
+    threads: 8,
     renderer: {
         threadSync: true,
         wireframe: 0,
@@ -14,7 +14,7 @@ const config: AppConfig = {
         cameraFov: 45,
         cameraNear: 2,
         qtEnabled: true,
-        qtMaxSize: 512,
+        qtMaxSize: 256,
     }
 }
 

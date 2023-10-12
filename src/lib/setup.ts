@@ -56,6 +56,9 @@ async function doSetup() {
         });
     }
 
+    scene.position.copy(camera.position.multScalar(-1));
+    camera.position.set(0, 0, 0);
+
     renderer.render(camera, scene);
     self.close();
 }

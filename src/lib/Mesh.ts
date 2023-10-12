@@ -1,13 +1,14 @@
 import Geometry from "./Geometry";
 import Material from "./Material";
+import Object3D from "./Object3D";
 import Vector3 from "./Vector3";
 
-export default class Mesh {
-    constructor(public readonly geometry: Geometry, public readonly material: Material) {};
+export default class Mesh extends Object3D {
+    constructor(public readonly geometry: Geometry, public readonly material: Material) {
+        super();
+    };
 
-    public readonly position = new Vector3(0, 0, 0);
     public readonly children: Mesh[] = [];
-    private parent?: Mesh;
 
     add(mesh: Mesh) {
         mesh.parent = this;
@@ -53,14 +54,6 @@ export default class Mesh {
         yield this;
         for (const child of this.children) {
             yield* child;
-        }
-    }
-
-    get worldPosition(): Vector3 {
-        if (this.parent) {
-            return this.parent.worldPosition.add(this.position);
-        } else {
-            return this.position;
         }
     }
 }

@@ -1,6 +1,5 @@
 import Material from "@/Material";
 import Mesh from "@/Mesh";
-import Vector3 from "@/Vector3";
 import OBJParser from "@/parsers/OBJParser";
 import setup from "@/setup";
 

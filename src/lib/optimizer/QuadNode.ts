@@ -2,7 +2,6 @@ import Face from "@/Face";
 import Vector3 from "@/Vector3";
 import QuadTree, { MeshAndFace } from "./QuadTree";
 import Mesh from "@/Mesh";
-import { rendererConfig } from "@/setup";
 
 export default class QuadNode {
 
@@ -42,30 +41,44 @@ export default class QuadNode {
 
         const [m, x] = face.clone().translate(intersection.sub(vertex)).getBoundingBox();
 
-        // const withinX = Math.min(this.topLeft.x, this.bottomRight.x) <= x.x && m.x <= Math.max(this.topLeft.x, this.bottomRight.x);
-        // const withinY = Math.min(this.topLeft.y, this.bottomRight.y) <= x.y && m.y <= Math.max(this.topLeft.y, this.bottomRight.y);
-        // const withinZ = Math.min(this.topLeft.z, this.bottomRight.z) <= x.z && m.z <= Math.max(this.topLeft.z, this.bottomRight.z);
+        const withinX = Math.min(this.topLeft.x, this.bottomRight.x) <= x.x && m.x <= Math.max(this.topLeft.x, this.bottomRight.x);
+        const withinY = Math.min(this.topLeft.y, this.bottomRight.y) <= x.y && m.y <= Math.max(this.topLeft.y, this.bottomRight.y);
+        const withinZ = Math.min(this.topLeft.z, this.bottomRight.z) <= x.z && m.z <= Math.max(this.topLeft.z, this.bottomRight.z);
 
-        const withinX = (m.x - 0.001) <= intersection.x && (x.x + 0.001) >= intersection.x;
-        const withinY = (m.y - 0.001) <= intersection.y && (x.y + 0.001) >= intersection.y;
-        const withinZ = (m.z - 0.001) <= intersection.z && (x.z + 0.001) >= intersection.z;
+        // const withinX = (m.x - 0.00001) <= intersection.x && (x.x + 0.00001) >= intersection.x;
+        // const withinY = (m.y - 0.00001) <= intersection.y && (x.y + 0.00001) >= intersection.y;
+        // const withinZ = (m.z - 0.00001) <= intersection.z && (x.z + 0.00001) >= intersection.z;
 
         const matches = withinX && withinY && withinZ;
-
-        if (!matches) {
-            console.log(m, x, intersection);
-        }
 
         return matches;
     }
 
-    insert(mesh: Mesh, face: Face) {
+    insert(mesh: Mesh, face: Face): boolean {
         if (this.children.length) {
+            let allMatched = true;
+            let oneMatched = false;
+
             for (const child of this.children) {
-                child.insert(mesh, face);
+                const matched = child.insert(mesh, face);
+                oneMatched ||= matched;
+
+                if (!matched) {
+                    allMatched = false;
+                }
             }
 
-            return;
+            if (allMatched) {
+                this.entries.push([mesh, face]);
+                for (const child of this.children) {
+                    const index = child.entries.findIndex(([_, iFace]) => face === iFace);
+                    if (index > -1) {
+                        child.entries.splice(index, 1);
+                    }
+                }
+            }
+
+            return oneMatched;
         }
 
         if (this.overlapsFace(face)) {
@@ -75,8 +88,20 @@ export default class QuadNode {
                 this.subdivide();
             }
 
-            return;
+            return true;
         }
+
+        /*if (this.overlaps(face.u) || this.overlaps(face.w) || this.overlaps(face.v)) {
+            const size = this.entries.push([mesh, face]);
+
+            if (size >= QuadTree.MAX_COUNT) {
+                this.subdivide();
+            }
+
+            return true;
+        }*/
+
+        return false;
     }
 
     private subdivide() {
@@ -120,8 +145,12 @@ export default class QuadNode {
 
         if (this.entries.length) {
             parts.push("Entries:");
-            for (const entry of this.entries) {
-                parts.push(sep + entry[1].name);
+            if (this.entries.length > 10) {
+                parts.push(sep + this.entries.length + " entries");
+            } else {
+                for (const entry of this.entries) {
+                    parts.push(sep + entry[1].name);
+                }
             }
         }
         
