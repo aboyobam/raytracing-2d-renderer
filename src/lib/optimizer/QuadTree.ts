@@ -48,7 +48,7 @@ export default class QuadTree {
     }
 
     *intersects(dir: Vector3): IterableIterator<MeshAndFace> {
-        yield* this.root.intersects(dir, new Set);
+        yield* this.root.intersects(dir);
     }
 
     print() {

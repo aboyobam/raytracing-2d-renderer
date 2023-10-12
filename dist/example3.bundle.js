@@ -118,11 +118,17 @@ class Material {
     g;
     b;
     a;
-    constructor(r = 256, g = 256, b = 256, a = 256) {
+    name;
+    static all = {};
+    constructor(r = 256, g = 256, b = 256, a = 256, name) {
         this.r = r;
         this.g = g;
         this.b = b;
         this.a = a;
+        this.name = name;
+        if (name) {
+            Material.all[name] = this;
+        }
     }
     ;
 }
@@ -223,6 +229,7 @@ class Raytracer {
         this.camera = camera;
         if (setup_1.rendererConfig.qtEnabled) {
             this.qt = QuadTree_1.default.ofScene(scene, camera);
+            // this.qt.print();
         }
     }
     *castRay(dir) {
@@ -310,24 +317,14 @@ class Renderer {
     buffer;
     mod;
     total;
-    renderer;
-    imageData;
-    needsUpdate = false;
     pixels;
     constructor(config, buffer, mod, total) {
         this.config = config;
         this.buffer = buffer;
         this.mod = mod;
         this.total = total;
-        this.renderer = new OffscreenCanvas(config.width, config.height);
-        this.imageData = this.renderer.getContext("2d").getImageData(0, 0, config.width, config.height);
-        const sharedUint8Array = new Uint8ClampedArray(buffer);
-        sharedUint8Array.set(this.imageData.data);
-        this.pixels = sharedUint8Array;
+        this.pixels = new Uint8ClampedArray(buffer);
     }
-    // private get pixels() {
-    //     return this.imageData.data;
-    // }
     setPixel(x, y, r, g, b, a = 256) {
         const index = (y * this.config.width + x) * 4;
         const pixels = this.pixels;
@@ -335,7 +332,6 @@ class Renderer {
         pixels[index + 1] = g;
         pixels[index + 2] = b;
         pixels[index + 3] = a;
-        this.needsUpdate = true;
     }
     render(camera, scene) {
         const planeHeight = 2 * Math.tan((camera.fov / 2) * (Math.PI / 180)) * camera.near;
@@ -547,10 +543,17 @@ class QuadNode {
         const t = (d - this.tree.camera.position.dot(normal)) / vertex.dot(normal);
         const intersection = this.tree.camera.position.add(vertex.multScalar(t));
         const [m, x] = face.clone().translate(intersection.sub(vertex)).getBoundingBox();
-        const withinX = Math.min(this.topLeft.x, this.bottomRight.x) <= x.x && m.x <= Math.max(this.topLeft.x, this.bottomRight.x);
-        const withinY = Math.min(this.topLeft.y, this.bottomRight.y) <= x.y && m.y <= Math.max(this.topLeft.y, this.bottomRight.y);
-        const withinZ = Math.min(this.topLeft.z, this.bottomRight.z) <= x.z && m.z <= Math.max(this.topLeft.z, this.bottomRight.z);
-        return withinX && withinY && withinZ;
+        // const withinX = Math.min(this.topLeft.x, this.bottomRight.x) <= x.x && m.x <= Math.max(this.topLeft.x, this.bottomRight.x);
+        // const withinY = Math.min(this.topLeft.y, this.bottomRight.y) <= x.y && m.y <= Math.max(this.topLeft.y, this.bottomRight.y);
+        // const withinZ = Math.min(this.topLeft.z, this.bottomRight.z) <= x.z && m.z <= Math.max(this.topLeft.z, this.bottomRight.z);
+        const withinX = (m.x - 0.001) <= intersection.x && (x.x + 0.001) >= intersection.x;
+        const withinY = (m.y - 0.001) <= intersection.y && (x.y + 0.001) >= intersection.y;
+        const withinZ = (m.z - 0.001) <= intersection.z && (x.z + 0.001) >= intersection.z;
+        const matches = withinX && withinY && withinZ;
+        if (!matches) {
+            console.log(m, x, intersection);
+        }
+        return matches;
     }
     insert(mesh, face) {
         if (this.children.length) {
@@ -576,13 +579,13 @@ class QuadNode {
         const center = Vector3_1.default.midpoint(Vector3_1.default.midpoint(topMid, bottomMid), Vector3_1.default.midpoint(rightMid, leftMid));
         this.children.push(new QuadNode(this.tree, [topRight, rightMid, center, topMid]), new QuadNode(this.tree, [rightMid, bottomRight, bottomMid, center]), new QuadNode(this.tree, [center, bottomMid, bottomLeft, leftMid]), new QuadNode(this.tree, [topMid, center, leftMid, topLeft]));
     }
-    *intersects(dir, seen) {
+    *intersects(dir) {
         if (!this.overlaps(dir)) {
             return;
         }
         yield* this.entries;
         for (const child of this.children) {
-            yield* child.intersects(dir, seen);
+            yield* child.intersects(dir);
         }
     }
     print(indent = 0) {
@@ -657,7 +660,7 @@ class QuadTree {
         }
     }
     *intersects(dir) {
-        yield* this.root.intersects(dir, new Set);
+        yield* this.root.intersects(dir);
     }
     print() {
         console.log(this.root.print());
@@ -678,6 +681,7 @@ exports["default"] = QuadTree;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const Face_1 = __webpack_require__(/*! @/Face */ "./src/lib/Face.ts");
 const Geometry_1 = __webpack_require__(/*! @/Geometry */ "./src/lib/Geometry.ts");
+const Material_1 = __webpack_require__(/*! @/Material */ "./src/lib/Material.ts");
 const Vector3_1 = __webpack_require__(/*! @/Vector3 */ "./src/lib/Vector3.ts");
 class OBJParser {
     static async parse(url) {
@@ -690,9 +694,17 @@ class OBJParser {
         const vertices = [];
         const normals = [];
         const faces = [];
+        let currentMaterial = null;
+        const materials = {};
         for (const line of lines) {
             const tokens = line.split(/\s+/);
             const command = tokens[0];
+            if (command === 'mtllib') {
+                await this.loadMaterials(tokens[1], materials);
+            }
+            if (command === 'usemtl') {
+                currentMaterial = materials[tokens[1]] || null;
+            }
             switch (command) {
                 case 'v':
                     vertices.push(new Vector3_1.default(parseFloat(tokens[1]), parseFloat(tokens[2]), parseFloat(tokens[3])));
@@ -716,12 +728,40 @@ class OBJParser {
                             vertices[vertexIndices[i + 1]]
                         ];
                         const faceNormal = normals[normalIndices[0]]; // Adjust this as needed to handle per-vertex normals
-                        faces.push(new Face_1.default(faceVertices[0], faceVertices[1], faceVertices[2], faceNormal));
+                        faces.push(new Face_1.default(faceVertices[0], faceVertices[1], faceVertices[2], faceNormal, currentMaterial));
                     }
                     break;
             }
         }
         return new Geometry_1.default(vertices, faces.filter(f => f.u && f.v && f.w));
+    }
+    static async loadMaterials(url, materials) {
+        const response = await fetch(url);
+        if (!response.ok) {
+            console.error(`Failed to load MTL file from ${url}: ${response.statusText}`);
+            return;
+        }
+        const mtlText = await response.text();
+        const lines = mtlText.split('\n');
+        let currentMaterialName = null;
+        for (const line of lines) {
+            const tokens = line.split(/\s+/);
+            const command = tokens[0];
+            switch (command) {
+                case 'newmtl':
+                    currentMaterialName = tokens[1];
+                    break;
+                case 'Kd':
+                    if (currentMaterialName) {
+                        const r = Math.floor(parseFloat(tokens[1]) * 255);
+                        const g = Math.floor(parseFloat(tokens[2]) * 255);
+                        const b = Math.floor(parseFloat(tokens[3]) * 255);
+                        const a = 255; // alpha is always 255 for now
+                        materials[currentMaterialName] = new Material_1.default(r, g, b, a, currentMaterialName);
+                    }
+                    break;
+            }
+        }
     }
 }
 exports["default"] = OBJParser;
@@ -744,13 +784,19 @@ const Scene_1 = __webpack_require__(/*! ./Scene */ "./src/lib/Scene.ts");
 const QuadTree_1 = __webpack_require__(/*! ./optimizer/QuadTree */ "./src/lib/optimizer/QuadTree.ts");
 let _buildScene;
 let _data;
+let ready = false;
 exports.rendererConfig = {};
-self.onmessage = ({ data }) => {
-    _data = data;
-    Object.assign(exports.rendererConfig, _data.config);
-    QuadTree_1.default.MAX_COUNT = _data.config.qtMaxSize;
-    if (_buildScene) {
-        doSetup();
+self.onmessage = ({ data: { type, data } }) => {
+    if (type == "config") {
+        _data = data;
+        Object.assign(exports.rendererConfig, _data.config);
+        QuadTree_1.default.MAX_COUNT = _data.config.qtMaxSize;
+        if (_buildScene) {
+            doSetup();
+        }
+    }
+    else if (type == "render") {
+        ready = true;
     }
 };
 function setup(buildScene) {
@@ -765,6 +811,17 @@ async function doSetup() {
     const renderer = new Renderer_1.default(_data.config, _data.buffer, _data.mod, _data.total);
     const camera = new Camera_1.default(_data.config.cameraFov, renderer.config.width / renderer.config.height, _data.config.cameraNear);
     await _buildScene({ scene, camera, renderer, config: _data.config });
+    if (_data.config.threadSync) {
+        await new Promise((resolve) => {
+            self.postMessage("ready");
+            const iv = setInterval(() => {
+                if (ready) {
+                    clearInterval(iv);
+                    return resolve();
+                }
+            });
+        });
+    }
     renderer.render(camera, scene);
     self.close();
 }

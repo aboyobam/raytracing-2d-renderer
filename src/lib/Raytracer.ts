@@ -14,6 +14,7 @@ export default class Raytracer {
     constructor(private readonly scene: Scene, public readonly camera: Camera) {
         if (rendererConfig.qtEnabled) {
             this.qt = QuadTree.ofScene(scene, camera);
+            // this.qt.print();
         }
     }
 

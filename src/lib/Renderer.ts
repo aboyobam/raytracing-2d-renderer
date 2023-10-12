@@ -5,8 +5,6 @@ import Scene from "./Scene";
 import type AppConfig from "./config";
 
 export default class Renderer {
-    private readonly renderer: OffscreenCanvas;
-    private readonly imageData: ImageData;
     private readonly pixels: Uint8ClampedArray;
 
     constructor(
@@ -15,11 +13,7 @@ export default class Renderer {
         public readonly mod: number,
         public readonly total: number
     ) {
-        this.renderer = new OffscreenCanvas(config.width, config.height);
-        this.imageData = this.renderer.getContext("2d").getImageData(0, 0, config.width, config.height);
-        const sharedUint8Array = new Uint8ClampedArray(buffer);
-        sharedUint8Array.set(this.imageData.data);
-        this.pixels = sharedUint8Array;
+        this.pixels = new Uint8ClampedArray(buffer);
     }
 
     setPixel(x: number, y: number, r: number, g: number, b: number, a = 256) {

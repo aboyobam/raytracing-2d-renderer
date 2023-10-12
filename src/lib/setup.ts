@@ -11,16 +11,21 @@ let _data: {
     config: AppConfig['renderer'];
     buffer: SharedArrayBuffer;
 };
+let ready = false;
 
 export const rendererConfig = {} as AppConfig['renderer'];
 
-self.onmessage = ({ data }) => {
-    _data = data;
-    Object.assign(rendererConfig, _data.config);
-    QuadTree.MAX_COUNT = _data.config.qtMaxSize;
-    
-    if (_buildScene) {
-        doSetup();
+self.onmessage = ({ data: { type, data } }) => {
+    if (type == "config") {
+        _data = data;
+        Object.assign(rendererConfig, _data.config);
+        QuadTree.MAX_COUNT = _data.config.qtMaxSize;
+        
+        if (_buildScene) {
+            doSetup();
+        }
+    } else if (type == "render") {
+        ready = true;
     }
 }
 
@@ -38,6 +43,18 @@ async function doSetup() {
     const camera = new Camera(_data.config.cameraFov, renderer.config.width / renderer.config.height, _data.config.cameraNear);
 
     await _buildScene({ scene, camera, renderer, config: _data.config });
+
+    if (_data.config.threadSync) {
+        await new Promise<void>((resolve) => {
+            self.postMessage("ready");
+            const iv = setInterval(() => {
+                if (ready) {
+                    clearInterval(iv);
+                    return resolve();
+                }
+            });
+        });
+    }
 
     renderer.render(camera, scene);
     self.close();

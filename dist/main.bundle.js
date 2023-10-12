@@ -11,19 +11,20 @@
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const config = {
-    file: 'example3',
+    file: 'blender-scene',
     width: 500,
     height: 500,
-    smoothing: false,
-    threads: 12,
+    smoothing: true,
+    threads: 10,
     renderer: {
+        threadSync: true,
         wireframe: 0,
         width: 500,
         height: 500,
         cameraFov: 45,
         cameraNear: 2,
         qtEnabled: true,
-        qtMaxSize: 24
+        qtMaxSize: 512,
     }
 };
 exports["default"] = config;
@@ -68,28 +69,39 @@ var exports = __webpack_exports__;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const config_1 = __webpack_require__(/*! ../config */ "./src/config.ts");
-const renderer = new OffscreenCanvas(config_1.default.renderer.width, config_1.default.renderer.height);
-const rendererCtx = renderer.getContext("2d");
-const imageData = rendererCtx.getImageData(0, 0, config_1.default.renderer.width, config_1.default.renderer.height);
 const viewBuffer = new SharedArrayBuffer(config_1.default.renderer.width * config_1.default.renderer.height * 4);
+const pixels = new Uint8ClampedArray(viewBuffer);
 const canvas = document.createElement("canvas");
 canvas.width = config_1.default.width;
 canvas.height = config_1.default.height;
 const ctx = canvas.getContext("2d");
+const imageData = ctx.getImageData(0, 0, config_1.default.renderer.width, config_1.default.renderer.height);
 document.body.appendChild(canvas);
+const workers = [];
 for (let mod = 0; mod < config_1.default.threads; mod++) {
     const worker = new Worker(config_1.default.file + ".bundle.js");
     worker.postMessage({
-        mod, total: config_1.default.threads,
-        config: config_1.default.renderer,
-        buffer: viewBuffer
+        type: "config",
+        data: {
+            mod, total: config_1.default.threads,
+            config: config_1.default.renderer,
+            buffer: viewBuffer
+        }
+    });
+    workers.push(worker);
+}
+if (config_1.default.renderer.threadSync) {
+    Promise.all(workers.map(worker => new Promise(resolve => worker.onmessage = resolve))).then(() => {
+        workers.forEach(worker => {
+            worker.postMessage({
+                type: "render"
+            });
+        });
     });
 }
 function draw() {
-    imageData.data.set(new Uint8Array(viewBuffer));
-    rendererCtx.putImageData(imageData, 0, 0);
-    ctx.imageSmoothingEnabled = config_1.default.smoothing;
-    ctx.drawImage(renderer, 0, 0, canvas.width, canvas.height);
+    imageData.data.set(pixels);
+    ctx.putImageData(imageData, 0, 0);
     requestAnimationFrame(draw);
 }
 requestAnimationFrame(draw);

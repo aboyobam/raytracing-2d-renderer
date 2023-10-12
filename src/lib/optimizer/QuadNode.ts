@@ -2,6 +2,7 @@ import Face from "@/Face";
 import Vector3 from "@/Vector3";
 import QuadTree, { MeshAndFace } from "./QuadTree";
 import Mesh from "@/Mesh";
+import { rendererConfig } from "@/setup";
 
 export default class QuadNode {
 
@@ -41,11 +42,21 @@ export default class QuadNode {
 
         const [m, x] = face.clone().translate(intersection.sub(vertex)).getBoundingBox();
 
-        const withinX = Math.min(this.topLeft.x, this.bottomRight.x) <= x.x && m.x <= Math.max(this.topLeft.x, this.bottomRight.x);
-        const withinY = Math.min(this.topLeft.y, this.bottomRight.y) <= x.y && m.y <= Math.max(this.topLeft.y, this.bottomRight.y);
-        const withinZ = Math.min(this.topLeft.z, this.bottomRight.z) <= x.z && m.z <= Math.max(this.topLeft.z, this.bottomRight.z);
-    
-        return withinX && withinY && withinZ;
+        // const withinX = Math.min(this.topLeft.x, this.bottomRight.x) <= x.x && m.x <= Math.max(this.topLeft.x, this.bottomRight.x);
+        // const withinY = Math.min(this.topLeft.y, this.bottomRight.y) <= x.y && m.y <= Math.max(this.topLeft.y, this.bottomRight.y);
+        // const withinZ = Math.min(this.topLeft.z, this.bottomRight.z) <= x.z && m.z <= Math.max(this.topLeft.z, this.bottomRight.z);
+
+        const withinX = (m.x - 0.001) <= intersection.x && (x.x + 0.001) >= intersection.x;
+        const withinY = (m.y - 0.001) <= intersection.y && (x.y + 0.001) >= intersection.y;
+        const withinZ = (m.z - 0.001) <= intersection.z && (x.z + 0.001) >= intersection.z;
+
+        const matches = withinX && withinY && withinZ;
+
+        if (!matches) {
+            console.log(m, x, intersection);
+        }
+
+        return matches;
     }
 
     insert(mesh: Mesh, face: Face) {
@@ -85,7 +96,7 @@ export default class QuadNode {
         );
     }
 
-    *intersects(dir: Vector3, seen: Set<Face>): IterableIterator<MeshAndFace> {
+    *intersects(dir: Vector3): IterableIterator<MeshAndFace> {
         if (!this.overlaps(dir)) {
             return;
         }
@@ -93,7 +104,7 @@ export default class QuadNode {
         yield* this.entries;
 
         for (const child of this.children) {
-            yield* child.intersects(dir, seen);
+            yield* child.intersects(dir);
         }
     }
 

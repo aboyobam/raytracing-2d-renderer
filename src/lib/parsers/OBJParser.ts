@@ -1,5 +1,6 @@
 import Face from "@/Face";
 import Geometry from "@/Geometry";
+import Material from "@/Material";
 import Vector3 from "@/Vector3";
 
 export default class OBJParser {
@@ -16,9 +17,20 @@ export default class OBJParser {
         const normals: Vector3[] = [];
         const faces: Face[] = [];
 
+        let currentMaterial: Material | null = null;
+        const materials: Record<string, Material> = {};
+
         for (const line of lines) {
             const tokens = line.split(/\s+/);
             const command = tokens[0];
+
+            if (command === 'mtllib') {
+                await this.loadMaterials(tokens[1], materials);                
+            }
+
+            if (command === 'usemtl') {
+                currentMaterial = materials[tokens[1]] || null;
+            }
 
             switch (command) {
                 case 'v':
@@ -54,12 +66,44 @@ export default class OBJParser {
                             vertices[vertexIndices[i + 1]]
                         ];
                         const faceNormal = normals[normalIndices[0]]; // Adjust this as needed to handle per-vertex normals
-                        faces.push(new Face(faceVertices[0], faceVertices[1], faceVertices[2], faceNormal));
+                        faces.push(new Face(faceVertices[0], faceVertices[1], faceVertices[2], faceNormal, currentMaterial));
                     }
                     break;
             }
         }
 
         return new Geometry(vertices, faces.filter(f => f.u && f.v && f.w));
+    }
+
+    static async loadMaterials(url: string, materials: Record<string, Material>): Promise<void> {
+        const response = await fetch(url);
+        if (!response.ok) {
+            console.error(`Failed to load MTL file from ${url}: ${response.statusText}`);
+            return;
+        }
+
+        const mtlText = await response.text();
+        const lines = mtlText.split('\n');
+        let currentMaterialName: string | null = null;
+
+        for (const line of lines) {
+            const tokens = line.split(/\s+/);
+            const command = tokens[0];
+
+            switch (command) {
+                case 'newmtl':
+                    currentMaterialName = tokens[1];
+                    break;
+                case 'Kd':
+                    if (currentMaterialName) {
+                        const r = Math.floor(parseFloat(tokens[1]) * 255);
+                        const g = Math.floor(parseFloat(tokens[2]) * 255);
+                        const b = Math.floor(parseFloat(tokens[3]) * 255);
+                        const a = 255;  // alpha is always 255 for now
+                        materials[currentMaterialName] = new Material(r, g, b, a, currentMaterialName);
+                    }
+                    break;
+            }
+        }
     }
 }
