@@ -14,7 +14,7 @@ document.body.appendChild(canvas);
 const workers: Worker[] = [];
 
 for (let mod = 0; mod < config.threads; mod++) {
-    const worker = new Worker(config.file + ".bundle.js");
+    const worker = new Worker("/js/" + config.file + ".bundle.js");
     worker.postMessage({
         type: "config",
         data: {

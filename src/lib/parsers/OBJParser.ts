@@ -5,7 +5,7 @@ import Vector3 from "@/Vector3";
 
 export default class OBJParser {
     static async parse(url: string): Promise<Geometry> {
-        const response = await fetch(url);
+        const response = await fetch("/models/" + url);
         if (!response.ok) {
             throw new Error(`Failed to load OBJ file from ${url}: ${response.statusText}`);
         }
@@ -76,7 +76,7 @@ export default class OBJParser {
     }
 
     static async loadMaterials(url: string, materials: Record<string, Material>): Promise<void> {
-        const response = await fetch(url);
+        const response = await fetch("/models/" + url);
         if (!response.ok) {
             console.error(`Failed to load MTL file from ${url}: ${response.statusText}`);
             return;
