@@ -3,34 +3,43 @@ import Face from "./Face";
 import Mesh from "./Mesh";
 import Scene from "./Scene";
 import Vector3 from "./Vector3";
-import QuadTree from "./optimizer/QuadTree";
+import Octree from "./optimizer/Octree/Octree";
+import QuadTree from "./optimizer/PlanarQuadTree/QuadTree";
 import { rendererConfig } from "./setup";
 
 export default class Raytracer {
     static readonly EPSILON = 1e-7;
 
     private readonly qt: QuadTree;
+    private readonly ot: Octree;
 
     constructor(private readonly scene: Scene, public readonly camera: Camera) {
-        if (rendererConfig.qtEnabled) {
+        if (rendererConfig.optimizer?.type == "qt") {
             this.qt = QuadTree.ofScene(scene, camera);
-            this.qt.print();
+        }
+
+        if (rendererConfig.optimizer?.type == "ot") {
+            this.ot = new Octree(scene);
+            // this.ot.print();
         }
     }
 
     *castRay(dir: Vector3): IterableIterator<Intersection> {
-        const normDir = dir.sub(this.camera.position).norm();
+        const normDir = dir.norm();
 
-        if (rendererConfig.qtEnabled) {
+        if (!rendererConfig.optimizer) {
+            for (const mesh of this.scene) {
+                for (const origFace of mesh.geometry.faces) {
+                    yield* this.checkRay(mesh, origFace, normDir);
+                }
+            }
+        } else if (this.qt) {
             for (const [mesh, face] of this.qt.intersects(dir)) {
                 yield* this.checkRay(mesh, face, normDir);
             }
-        } else {
-            for (const mesh of this.scene) {
-                for (const origFace of mesh.geometry.faces) {
-                    const face = origFace.clone().translate(mesh.worldPosition);
-                    yield* this.checkRay(mesh, face, normDir);
-                }
+        } else if (this.ot) {
+            for (const [mesh, face] of this.ot.intersects(this.camera.position, dir)) {
+                yield* this.checkRay(mesh, face, normDir);
             }
         }
     }

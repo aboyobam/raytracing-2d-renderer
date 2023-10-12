@@ -2,7 +2,8 @@ import Camera from "./Camera";
 import Renderer from "./Renderer";
 import Scene from "./Scene";
 import type AppConfig from "./config";
-import QuadTree from "./optimizer/QuadTree";
+import Octree from "./optimizer/Octree/Octree";
+import QuadTree from "./optimizer/PlanarQuadTree/QuadTree";
 
 let _buildScene: (context: SetupContext) => void | Promise<void>;
 let _data: {
@@ -19,7 +20,16 @@ self.onmessage = ({ data: { type, data } }) => {
     if (type == "config") {
         _data = data;
         Object.assign(rendererConfig, _data.config);
-        QuadTree.MAX_COUNT = _data.config.qtMaxSize;
+
+        if (_data.config.optimizer) {
+            if (_data.config.optimizer.type === "qt") {
+                QuadTree.MAX_COUNT = _data.config.optimizer.maxSize;
+            }
+
+            if (_data.config.optimizer.type === "ot") {
+                Octree.MAX_DEPTH = _data.config.optimizer.maxDepth;
+            }
+        }
         
         if (_buildScene) {
             doSetup();
@@ -59,6 +69,7 @@ async function doSetup() {
     scene.position.copy(camera.position.multScalar(-1));
     camera.position.set(0, 0, 0);
 
+    scene.build();
     renderer.render(camera, scene);
     self.close();
 }

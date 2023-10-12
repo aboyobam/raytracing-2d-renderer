@@ -45,6 +45,7 @@ class Face {
     normal;
     material;
     static counter = 0;
+    boundingBox;
     name;
     constructor(u, v, w, normal, material, name) {
         this.u = u;
@@ -59,18 +60,20 @@ class Face {
         return new Face(this.u.clone(), this.v.clone(), this.w.clone(), this.normal, this.material, this.name + "_cloned");
     }
     getBoundingBox() {
-        return [
-            new Vector3_1.default(Math.min(this.u.x, this.v.x, this.w.x), Math.min(this.u.y, this.v.y, this.w.y), Math.min(this.u.z, this.v.z, this.w.z)),
-            new Vector3_1.default(Math.max(this.u.x, this.v.x, this.w.x), Math.max(this.u.y, this.v.y, this.w.y), Math.max(this.u.z, this.v.z, this.w.z))
+        if (this.boundingBox) {
+            return this.boundingBox;
+        }
+        this.boundingBox = [
+            Vector3_1.default.min(...this),
+            Vector3_1.default.max(...this)
         ];
+        return this.boundingBox;
     }
     translate(v) {
-        for (const s of this) {
-            for (const d of 'xyz') {
-                // @ts-ignore
-                s[d] += v[d];
-            }
-        }
+        this.u = this.u.add(v);
+        this.v = this.v.add(v);
+        this.w = this.w.add(v);
+        this.boundingBox = null;
         return this;
     }
     *[Symbol.iterator]() {
@@ -234,34 +237,43 @@ exports["default"] = Object3D;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const QuadTree_1 = __webpack_require__(/*! ./optimizer/QuadTree */ "./src/lib/optimizer/QuadTree.ts");
+const Octree_1 = __webpack_require__(/*! ./optimizer/Octree/Octree */ "./src/lib/optimizer/Octree/Octree.ts");
+const QuadTree_1 = __webpack_require__(/*! ./optimizer/PlanarQuadTree/QuadTree */ "./src/lib/optimizer/PlanarQuadTree/QuadTree.ts");
 const setup_1 = __webpack_require__(/*! ./setup */ "./src/lib/setup.ts");
 class Raytracer {
     scene;
     camera;
     static EPSILON = 1e-7;
     qt;
+    ot;
     constructor(scene, camera) {
         this.scene = scene;
         this.camera = camera;
-        if (setup_1.rendererConfig.qtEnabled) {
+        if (setup_1.rendererConfig.optimizer?.type == "qt") {
             this.qt = QuadTree_1.default.ofScene(scene, camera);
-            this.qt.print();
+        }
+        if (setup_1.rendererConfig.optimizer?.type == "ot") {
+            this.ot = new Octree_1.default(scene);
+            // this.ot.print();
         }
     }
     *castRay(dir) {
-        const normDir = dir.sub(this.camera.position).norm();
-        if (setup_1.rendererConfig.qtEnabled) {
+        const normDir = dir.norm();
+        if (!setup_1.rendererConfig.optimizer) {
+            for (const mesh of this.scene) {
+                for (const origFace of mesh.geometry.faces) {
+                    yield* this.checkRay(mesh, origFace, normDir);
+                }
+            }
+        }
+        else if (this.qt) {
             for (const [mesh, face] of this.qt.intersects(dir)) {
                 yield* this.checkRay(mesh, face, normDir);
             }
         }
-        else {
-            for (const mesh of this.scene) {
-                for (const origFace of mesh.geometry.faces) {
-                    const face = origFace.clone().translate(mesh.worldPosition);
-                    yield* this.checkRay(mesh, face, normDir);
-                }
+        else if (this.ot) {
+            for (const [mesh, face] of this.ot.intersects(this.camera.position, dir)) {
+                yield* this.checkRay(mesh, face, normDir);
             }
         }
     }
@@ -423,12 +435,25 @@ exports["default"] = Renderer;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const Object3D_1 = __webpack_require__(/*! ./Object3D */ "./src/lib/Object3D.ts");
+const Vector3_1 = __webpack_require__(/*! ./Vector3 */ "./src/lib/Vector3.ts");
 class Scene extends Object3D_1.default {
     meshes = [];
+    boundingBox = [new Vector3_1.default, new Vector3_1.default];
     add(...objs) {
         for (const obj of objs) {
             this.meshes.push(obj);
             obj.parent = this;
+        }
+    }
+    build() {
+        const [bbMin, bbMax] = this.boundingBox;
+        for (const mesh of this.meshes) {
+            for (const face of mesh.geometry.faces) {
+                face.translate(mesh.worldPosition);
+                const [min, max] = face.getBoundingBox();
+                bbMin.copy(Vector3_1.default.min(bbMin, min));
+                bbMax.copy(Vector3_1.default.max(bbMax, max));
+            }
         }
     }
     *[Symbol.iterator]() {
@@ -456,6 +481,12 @@ class Vector3 {
     z;
     static midpoint(a, b) {
         return a.add(b).multScalar(1 / 2);
+    }
+    static min(...vertecies) {
+        return new Vector3(Math.min(...vertecies.map(v => v.x)), Math.min(...vertecies.map(v => v.y)), Math.min(...vertecies.map(v => v.z)));
+    }
+    static max(...vertecies) {
+        return new Vector3(Math.max(...vertecies.map(v => v.x)), Math.max(...vertecies.map(v => v.y)), Math.max(...vertecies.map(v => v.z)));
     }
     constructor(x = 0, y = 0, z = 0) {
         this.x = x;
@@ -519,16 +550,223 @@ exports["default"] = Vector3;
 
 /***/ }),
 
-/***/ "./src/lib/optimizer/QuadNode.ts":
-/*!***************************************!*\
-  !*** ./src/lib/optimizer/QuadNode.ts ***!
-  \***************************************/
+/***/ "./src/lib/optimizer/Octree/Ocnode.ts":
+/*!********************************************!*\
+  !*** ./src/lib/optimizer/Octree/Ocnode.ts ***!
+  \********************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const Vector3_1 = __webpack_require__(/*! @/Vector3 */ "./src/lib/Vector3.ts");
-const QuadTree_1 = __webpack_require__(/*! ./QuadTree */ "./src/lib/optimizer/QuadTree.ts");
+const Octree_1 = __webpack_require__(/*! ./Octree */ "./src/lib/optimizer/Octree/Octree.ts");
+class Ocnode {
+    position;
+    size;
+    depth;
+    children;
+    entries = [];
+    constructor(position, size, depth = 0) {
+        this.position = position;
+        this.size = size;
+        this.depth = depth;
+    }
+    add(mesh, face) {
+        // matches children + no children
+        if (!this.children && this.depth < Octree_1.default.MAX_DEPTH) {
+            const [min, max] = face.getBoundingBox();
+            for (const x of [0, 1]) {
+                const bx = this.position.x - this.size;
+                if (min.x < (bx + this.size * x) || max.x > (bx + this.size * (x + 1))) {
+                    continue;
+                }
+                for (const y of [0, 1]) {
+                    const by = this.position.y - this.size;
+                    if (min.y < (by + this.size * y) || max.y > (by + this.size * (y + 1))) {
+                        continue;
+                    }
+                    for (const z of [0, 1]) {
+                        const bz = this.position.z - this.size;
+                        if (min.z < (bz + this.size * z) || max.z > (bz + this.size * (z + 1))) {
+                            continue;
+                        }
+                        this.subdivide();
+                        this.children[x][y][z].add(mesh, face);
+                        return;
+                    }
+                }
+            }
+        }
+        // has children
+        for (const child of this.getAllChildren()) {
+            if (child.fullFit(face)) {
+                child.add(mesh, face);
+                return;
+            }
+        }
+        // it goes in here
+        this.entries.push([mesh, face]);
+    }
+    *intersects(origin, dir) {
+        let tMin = -Infinity;
+        let tMax = Infinity;
+        const bounds = [
+            this.position.x - this.size,
+            this.position.x + this.size,
+            this.position.y - this.size,
+            this.position.y + this.size,
+            this.position.z - this.size,
+            this.position.z + this.size,
+        ];
+        const direction = ['x', 'y', 'z'];
+        for (let i = 0; i < direction.length; i++) {
+            const localDir = direction[i];
+            if (Math.abs(dir[localDir]) < Number.EPSILON) {
+                if (origin[localDir] < (bounds[i * 2]) || origin[localDir] > (bounds[i * 2 + 1])) {
+                    return;
+                }
+            }
+            else {
+                let t1 = (bounds[i * 2] - origin[localDir]) / dir[localDir];
+                let t2 = (bounds[i * 2 + 1] - origin[localDir]) / dir[localDir];
+                if (t1 > t2) {
+                    const temp = t1;
+                    t1 = t2;
+                    t2 = temp;
+                }
+                ;
+                tMin = t1 > tMin ? t1 : tMin;
+                tMax = t2 < tMax ? t2 : tMax;
+                if (tMin > tMax) {
+                    return;
+                }
+            }
+        }
+        if (tMin < 0 && tMax < 0) {
+            return;
+        }
+        yield* this.entries;
+        for (const child of this.getAllChildren()) {
+            yield* child.intersects(origin, dir);
+        }
+    }
+    subdivide() {
+        const children = [];
+        for (const x of [0, 1]) {
+            const row = [];
+            for (const y of [0, 1]) {
+                const col = [];
+                for (const z of [0, 1]) {
+                    const newPos = this.position.add(new Vector3_1.default((x - 0.5) * this.size, (y - 0.5) * this.size, (z - 0.5) * this.size));
+                    col.push(new Ocnode(newPos, this.size / 2, this.depth + 1));
+                }
+                row.push(col);
+            }
+            children.push(row);
+        }
+        this.children = children;
+    }
+    fullFit(face) {
+        const [min, max] = face.getBoundingBox();
+        if (min.x < (this.position.x - this.size) || max.x > (this.position.x + this.size)) {
+            return false;
+        }
+        if (min.y < (this.position.y - this.size) || max.y > (this.position.y + this.size)) {
+            return false;
+        }
+        if (min.z < (this.position.z - this.size) || max.z > (this.position.z + this.size)) {
+            return false;
+        }
+        return true;
+    }
+    *getAllChildren() {
+        if (!this.children) {
+            return;
+        }
+        for (const row of this.children) {
+            for (const col of row) {
+                for (const entry of col) {
+                    if (entry) {
+                        yield entry;
+                    }
+                }
+            }
+        }
+    }
+    print(indent = 0) {
+        const sep = "\t";
+        const parts = [];
+        parts.push(sep.repeat(indent) + `Position: (${this.position.x.toFixed(3)}, ${this.position.y.toFixed(3)}, ${this.position.z.toFixed(3)})`);
+        parts.push(sep.repeat(indent) + "Size: " + this.size.toFixed(3));
+        if (this.entries.length) {
+            if (this.entries.length > 10) {
+                parts.push(sep.repeat(indent) + "Entries: " + this.entries.length);
+            }
+            else {
+                parts.push(sep.repeat(indent) + "Entries:");
+                for (const entry of this.entries) {
+                    parts.push(sep.repeat(indent + 1) + "-" + entry[1].name);
+                }
+            }
+        }
+        if (this.children) {
+            parts.push(sep.repeat(indent) + "Children:");
+            for (const child of this.getAllChildren()) {
+                parts.push(...child.print(indent + 1));
+            }
+        }
+        return parts;
+    }
+}
+exports["default"] = Ocnode;
+
+
+/***/ }),
+
+/***/ "./src/lib/optimizer/Octree/Octree.ts":
+/*!********************************************!*\
+  !*** ./src/lib/optimizer/Octree/Octree.ts ***!
+  \********************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const Ocnode_1 = __webpack_require__(/*! ./Ocnode */ "./src/lib/optimizer/Octree/Ocnode.ts");
+const Vector3_1 = __webpack_require__(/*! @/Vector3 */ "./src/lib/Vector3.ts");
+class Octree {
+    static MAX_DEPTH;
+    root;
+    constructor(scene) {
+        const [min, max] = scene.boundingBox;
+        this.root = new Ocnode_1.default(Vector3_1.default.midpoint(min, max), Math.max(max.x - min.x, max.y - min.y, max.z - min.z) / 2);
+        for (const mesh of scene) {
+            for (const face of mesh.geometry.faces) {
+                this.root.add(mesh, face);
+            }
+        }
+    }
+    *intersects(origin, dir) {
+        yield* this.root.intersects(origin, dir);
+    }
+    print() {
+        console.log(this.root.print().join("\n"));
+    }
+}
+exports["default"] = Octree;
+
+
+/***/ }),
+
+/***/ "./src/lib/optimizer/PlanarQuadTree/QuadNode.ts":
+/*!******************************************************!*\
+  !*** ./src/lib/optimizer/PlanarQuadTree/QuadNode.ts ***!
+  \******************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const Vector3_1 = __webpack_require__(/*! @/Vector3 */ "./src/lib/Vector3.ts");
+const QuadTree_1 = __webpack_require__(/*! ./QuadTree */ "./src/lib/optimizer/PlanarQuadTree/QuadTree.ts");
 class QuadNode {
     tree;
     corners;
@@ -567,9 +805,6 @@ class QuadNode {
         const withinX = Math.min(this.topLeft.x, this.bottomRight.x) <= x.x && m.x <= Math.max(this.topLeft.x, this.bottomRight.x);
         const withinY = Math.min(this.topLeft.y, this.bottomRight.y) <= x.y && m.y <= Math.max(this.topLeft.y, this.bottomRight.y);
         const withinZ = Math.min(this.topLeft.z, this.bottomRight.z) <= x.z && m.z <= Math.max(this.topLeft.z, this.bottomRight.z);
-        // const withinX = (m.x - 0.00001) <= intersection.x && (x.x + 0.00001) >= intersection.x;
-        // const withinY = (m.y - 0.00001) <= intersection.y && (x.y + 0.00001) >= intersection.y;
-        // const withinZ = (m.z - 0.00001) <= intersection.z && (x.z + 0.00001) >= intersection.z;
         const matches = withinX && withinY && withinZ;
         return matches;
     }
@@ -664,15 +899,15 @@ exports["default"] = QuadNode;
 
 /***/ }),
 
-/***/ "./src/lib/optimizer/QuadTree.ts":
-/*!***************************************!*\
-  !*** ./src/lib/optimizer/QuadTree.ts ***!
-  \***************************************/
+/***/ "./src/lib/optimizer/PlanarQuadTree/QuadTree.ts":
+/*!******************************************************!*\
+  !*** ./src/lib/optimizer/PlanarQuadTree/QuadTree.ts ***!
+  \******************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const QuadNode_1 = __webpack_require__(/*! ./QuadNode */ "./src/lib/optimizer/QuadNode.ts");
+const QuadNode_1 = __webpack_require__(/*! ./QuadNode */ "./src/lib/optimizer/PlanarQuadTree/QuadNode.ts");
 class QuadTree {
     camera;
     static MAX_COUNT;
@@ -701,8 +936,7 @@ class QuadTree {
         this.root = new QuadNode_1.default(this, [topRight, bottomRight, bottomLeft, topLeft]);
     }
     insert(mesh) {
-        for (const origFace of mesh.geometry.faces) {
-            const face = origFace.clone().translate(mesh.worldPosition);
+        for (const face of mesh.geometry.faces) {
             this.root.insert(mesh, face);
         }
     }
@@ -828,7 +1062,8 @@ exports.rendererConfig = void 0;
 const Camera_1 = __webpack_require__(/*! ./Camera */ "./src/lib/Camera.ts");
 const Renderer_1 = __webpack_require__(/*! ./Renderer */ "./src/lib/Renderer.ts");
 const Scene_1 = __webpack_require__(/*! ./Scene */ "./src/lib/Scene.ts");
-const QuadTree_1 = __webpack_require__(/*! ./optimizer/QuadTree */ "./src/lib/optimizer/QuadTree.ts");
+const Octree_1 = __webpack_require__(/*! ./optimizer/Octree/Octree */ "./src/lib/optimizer/Octree/Octree.ts");
+const QuadTree_1 = __webpack_require__(/*! ./optimizer/PlanarQuadTree/QuadTree */ "./src/lib/optimizer/PlanarQuadTree/QuadTree.ts");
 let _buildScene;
 let _data;
 let ready = false;
@@ -837,7 +1072,14 @@ self.onmessage = ({ data: { type, data } }) => {
     if (type == "config") {
         _data = data;
         Object.assign(exports.rendererConfig, _data.config);
-        QuadTree_1.default.MAX_COUNT = _data.config.qtMaxSize;
+        if (_data.config.optimizer) {
+            if (_data.config.optimizer.type === "qt") {
+                QuadTree_1.default.MAX_COUNT = _data.config.optimizer.maxSize;
+            }
+            if (_data.config.optimizer.type === "ot") {
+                Octree_1.default.MAX_DEPTH = _data.config.optimizer.maxDepth;
+            }
+        }
         if (_buildScene) {
             doSetup();
         }
@@ -871,6 +1113,7 @@ async function doSetup() {
     }
     scene.position.copy(camera.position.multScalar(-1));
     camera.position.set(0, 0, 0);
+    scene.build();
     renderer.render(camera, scene);
     self.close();
 }
@@ -921,7 +1164,7 @@ const OBJParser_1 = __webpack_require__(/*! @/parsers/OBJParser */ "./src/lib/pa
 const setup_1 = __webpack_require__(/*! @/setup */ "./src/lib/setup.ts");
 (0, setup_1.default)(async ({ scene, camera }) => {
     const geo = await OBJParser_1.default.parse("scene.obj");
-    const mesh = new Mesh_1.default(geo, new Material_1.default(250, 0, 0, 256));
+    const mesh = new Mesh_1.default(geo, new Material_1.default(250, 0, 0, 150));
     // mesh.position.set(0, -2, 6);
     camera.position.set(0, 12, -5);
     camera.target.copy(new Vector3_1.default(0, -1, 0.5).norm());

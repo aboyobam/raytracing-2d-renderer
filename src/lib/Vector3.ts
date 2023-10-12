@@ -2,6 +2,22 @@ export default class Vector3 {
     static midpoint(a: Vector3, b: Vector3): Vector3 {
         return a.add(b).multScalar(1 / 2);
     }
+
+    static min(...vertecies: Vector3[]): Vector3 {
+        return new Vector3(
+            Math.min(...vertecies.map(v => v.x)),
+            Math.min(...vertecies.map(v => v.y)),
+            Math.min(...vertecies.map(v => v.z))
+        );
+    }
+
+    static max(...vertecies: Vector3[]): Vector3 {
+        return new Vector3(
+            Math.max(...vertecies.map(v => v.x)),
+            Math.max(...vertecies.map(v => v.y)),
+            Math.max(...vertecies.map(v => v.z))
+        );
+    }
     
     constructor(public x: number = 0, public y: number = 0, public z: number = 0) {};
 

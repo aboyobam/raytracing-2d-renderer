@@ -3,12 +3,13 @@ import Vector3 from "./Vector3";
 
 export default class Face {
     private static counter = 0;
+    private boundingBox: [Vector3, Vector3];
     readonly name: string;
 
     constructor(
-        public readonly u: Vector3,
-        public readonly v: Vector3,
-        public readonly w: Vector3,
+        public u: Vector3,
+        public v: Vector3,
+        public w: Vector3,
         public readonly normal: Vector3,
         public readonly material?: Material,
         name?: string
@@ -28,19 +29,25 @@ export default class Face {
     }
 
     getBoundingBox(): [Vector3, Vector3] {
-        return [
-            new Vector3(Math.min(this.u.x, this.v.x, this.w.x), Math.min(this.u.y, this.v.y, this.w.y), Math.min(this.u.z, this.v.z, this.w.z)),
-            new Vector3(Math.max(this.u.x, this.v.x, this.w.x), Math.max(this.u.y, this.v.y, this.w.y), Math.max(this.u.z, this.v.z, this.w.z))
+        if (this.boundingBox) {
+            return this.boundingBox;
+        }
+
+        this.boundingBox = [
+            Vector3.min(...this),
+            Vector3.max(...this)
         ];
+
+        return this.boundingBox;
     }
 
     translate(v: Vector3) {
-        for (const s of this) {
-            for (const d of 'xyz') {
-                // @ts-ignore
-                s[d] += v[d]; 
-            }
-        }
+        this.u = this.u.add(v);
+        this.v = this.v.add(v);
+        this.w = this.w.add(v);
+
+        this.boundingBox = null;
+
         return this;
     }
 

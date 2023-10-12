@@ -11,7 +11,18 @@ export default interface AppConfig {
         cameraNear: number;
         threadSync: boolean;
         wireframe?: number;
-        qtEnabled: boolean;
-        qtMaxSize?: number;
+        optimizer?: Optimizer;
     };
 }
+
+interface OtOptimizer {
+    type: "ot";
+    maxDepth: number;
+}
+
+interface QtOptimizer {
+    type: "qt";
+    maxSize: number;
+}
+
+type Optimizer = OtOptimizer | QtOptimizer;

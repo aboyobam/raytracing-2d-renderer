@@ -42,8 +42,7 @@ export default class QuadTree {
     }
 
     insert(mesh: Mesh) {
-        for (const origFace of mesh.geometry.faces) {
-            const face = origFace.clone().translate(mesh.worldPosition);
+        for (const face of mesh.geometry.faces) {
             this.root.insert(mesh, face);
         }
     }

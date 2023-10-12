@@ -7,7 +7,7 @@ import setup from "@/setup";
 setup(async ({ scene, camera }) => {
     const geo = await OBJParser.parse("scene.obj");
     
-    const mesh = new Mesh(geo, new Material(250, 0, 0, 256));
+    const mesh = new Mesh(geo, new Material(250, 0, 0, 150));
     // mesh.position.set(0, -2, 6);
 
     camera.position.set(0, 12, -5);

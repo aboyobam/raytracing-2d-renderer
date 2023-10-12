@@ -45,10 +45,6 @@ export default class QuadNode {
         const withinY = Math.min(this.topLeft.y, this.bottomRight.y) <= x.y && m.y <= Math.max(this.topLeft.y, this.bottomRight.y);
         const withinZ = Math.min(this.topLeft.z, this.bottomRight.z) <= x.z && m.z <= Math.max(this.topLeft.z, this.bottomRight.z);
 
-        // const withinX = (m.x - 0.00001) <= intersection.x && (x.x + 0.00001) >= intersection.x;
-        // const withinY = (m.y - 0.00001) <= intersection.y && (x.y + 0.00001) >= intersection.y;
-        // const withinZ = (m.z - 0.00001) <= intersection.z && (x.z + 0.00001) >= intersection.z;
-
         const matches = withinX && withinY && withinZ;
 
         return matches;
