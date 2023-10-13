@@ -110,10 +110,6 @@ export default class Renderer {
                                 const [lightHit] = rc.intersectOrder(light.worldPosition, lightDir);
 
                                 if (lightHit.face !== hit.face) {
-                                    console.log("light no hit", [
-                                        lightDir.pretty(20),
-                                        dir.pretty(20),
-                                    ]);
                                     continue;
                                 }
 
@@ -123,29 +119,6 @@ export default class Renderer {
 
                             lightAlpha[0] = lightStrength;
                         }
-
-                        /*for (const light of scene.lights) {
-                            const lightDir = hit.point.sub(light.worldPosition);
-                            const lightHits = Array.from(rc.castRay(light.worldPosition, lightDir)).sort((a, b) => a.distance - b.distance);
-                            console.log(hit.point.pretty(), lightDir.norm().pretty(), hit.face.name, lightHits[0].face.name);
-                            
-                            let localLightStrength = 0;
-                            for (const lightHit of lightHits) {
-                                const localAlpha = lightHit.face.material.a / 256;
-                                const localStrength = (1 - localLightStrength) * localAlpha;
-                                localLightStrength += localStrength;
-
-                                const dist = light.worldPosition.sub(hit.point).len();
-                                const strength = light.intensity / Math.pow(1 + (dist / light.distance), light.decay);
-
-                                lightStrength += localStrength * strength;
-        
-                                if (localLightStrength > 0.999) {
-                                    break;
-                                }
-                            }
-                        }*/
-
                     }
                     //#endregion
 

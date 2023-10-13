@@ -54,24 +54,13 @@ async function doSetup() {
 
     await _buildScene({ scene, camera, renderer, config: _data.config });
 
-    if (_data.config.threadSync) {
-        await new Promise<void>((resolve) => {
-            self.postMessage("ready");
-            const iv = setInterval(() => {
-                if (ready) {
-                    clearInterval(iv);
-                    return resolve();
-                }
-            });
-        });
-    }
-
     scene.position.copy(camera.position.multScalar(-1));
     camera.position.set(0, 0, 0);
 
     scene.build();
     renderer.render(camera, scene);
-    // self.close();
+    self.postMessage("done");
+    self.close();
 }
 
 interface SetupContext {

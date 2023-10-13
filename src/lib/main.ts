@@ -13,6 +13,9 @@ document.body.appendChild(canvas);
 
 const workers: Worker[] = [];
 
+let finished = 0;
+const start = performance.now();
+
 for (let mod = 0; mod < config.threads; mod++) {
     const worker = new Worker("/js/" + config.file + ".bundle.js");
     worker.postMessage({
@@ -25,16 +28,15 @@ for (let mod = 0; mod < config.threads; mod++) {
     });
 
     workers.push(worker);
-}
 
-if (config.renderer.threadSync) {
-    Promise.all(workers.map(worker => new Promise(resolve => worker.onmessage = resolve))).then(() => {
-        workers.forEach(worker => {
-            worker.postMessage({
-                type: "render"
-            });
-        });
-    });
+    worker.onmessage = (event) => {
+        if (event.data == "done") {
+            finished++;
+            if (finished == config.threads) {
+                console.log("Rendering time:", performance.now() - start);
+            }
+        }
+    }
 }
 
 function draw() {
