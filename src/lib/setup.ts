@@ -71,7 +71,7 @@ async function doSetup() {
 
     scene.build();
     renderer.render(camera, scene);
-    self.close();
+    // self.close();
 }
 
 interface SetupContext {

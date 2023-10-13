@@ -6,12 +6,15 @@ export default class Face {
     private boundingBox: [Vector3, Vector3];
     readonly name: string;
 
+    uvMap: Readonly<[Vector3, Vector3, Vector3]>;
+    private _uvNormals: [number, number, number];
+
     constructor(
         public u: Vector3,
         public v: Vector3,
         public w: Vector3,
         public readonly normal: Vector3,
-        public readonly material?: Material,
+        public material?: Material,
         name?: string
     ) {
         this.name = (Face.counter++) + "_" + (name || "Face");

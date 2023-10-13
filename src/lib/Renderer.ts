@@ -1,8 +1,9 @@
 import Camera from "./Camera";
 import Material from "./Material";
-import Raytracer from "./Raytracer";
+import Raytracer, { Intersection } from "./Raytracer";
 import Scene from "./Scene";
 import type AppConfig from "./config";
+import { rendererConfig } from "./setup";
 
 export default class Renderer {
     private readonly pixels: Uint8ClampedArray;
@@ -51,13 +52,16 @@ export default class Renderer {
                 const dir = topLeft
                     .add(xStep.multScalar(x))
                     .add(yStep.multScalar(y))
+                    .norm();
 
-                const hits = Array.from(rc.castRay(dir));
+                const hits = rc.intersectOrder(camera.position, dir);
                 
                 if (!hits.length) {
-                    this.setPixel(x, y, 200, 200, 200);
+                    this.setPixel(x, y, 230, 230, 230);
                     continue;
                 }
+
+                const lightAlpha = Array(hits.length).fill(rendererConfig.alpha ? 0 : 1);
 
                 if (this.config.wireframe) {
                     for (const hit of hits) {
@@ -67,30 +71,113 @@ export default class Renderer {
                         }
                     }
                 } else {
-                    const sorted = hits.sort((a, b) => a.distance - b.distance);
+                    //#region light
+                    if (rendererConfig.hasLight) {
+                        if (rendererConfig.alpha) {
+                            for (let index = 0; index < hits.length; index++) {
+                                const hit = hits[index];
+                                let lightStrength = 0;
 
-                    let strength = 0;
-                    const colors: [Material, number, number][] = [];
+                                for (const light of scene.lights) {
+                                    const lightDir = hit.point.sub(light.worldPosition);
+                                    const lightHits = rc.intersectOrder(light.worldPosition, lightDir);
 
-                    for (const hit of sorted) {
-                        const localAlpha = (hit.face.material ?? hit.mesh.material).a / 256;
-                        const localStrength = (1 - strength) * localAlpha;
-                        strength += localStrength;
-                        colors.push([(hit.face.material ?? hit.mesh.material), localStrength, hit.angle / 180]);
+                                    let strength = 0;
+                                    for (const lightHit of lightHits) {
+                                        const localAlpha = lightHit.face.material.a / 256;
+                                        const localStrength = (1 - strength) * localAlpha;
+                                        strength += localStrength;
+                                        
+                                        if (lightHit.face === hit.face) {
+                                            const dist = light.worldPosition.sub(lightHit.point).len();
+                                            lightStrength = localStrength * light.intensity / Math.pow(1 + (dist / light.distance), light.decay);;
+                                            break;
+                                        }
+                
+                                        if (strength > 0.999) {
+                                            break;
+                                        }
+                                    }
+                                }
+    
+                                lightAlpha[index] = lightStrength;
+                            }
+                        } else {
+                            const [hit] = hits;
+                            let lightStrength = 0;
+                            for (const light of scene.lights) {
+                                const lightDir = hit.point.sub(light.worldPosition).norm();
+                                const [lightHit] = rc.intersectOrder(light.worldPosition, lightDir);
 
-                        if (strength > 0.999) {
-                            break;
+                                if (lightHit.face !== hit.face) {
+                                    console.log("light no hit", [
+                                        lightDir.pretty(20),
+                                        dir.pretty(20),
+                                    ]);
+                                    continue;
+                                }
+
+                                const dist = light.worldPosition.sub(hit.point).len();
+                                lightStrength += light.intensity / Math.pow(1 + (dist / light.distance), light.decay);
+                            }
+
+                            lightAlpha[0] = lightStrength;
                         }
-                    }
 
-                    const { r, g, b, a }: Material = colors.reduce((acc, [{ r, g, b, a }, s, q]) => {
-                        acc.r += r * q * s; 
-                        acc.g += g * q * s; 
-                        acc.b += b * q * s; 
+                        /*for (const light of scene.lights) {
+                            const lightDir = hit.point.sub(light.worldPosition);
+                            const lightHits = Array.from(rc.castRay(light.worldPosition, lightDir)).sort((a, b) => a.distance - b.distance);
+                            console.log(hit.point.pretty(), lightDir.norm().pretty(), hit.face.name, lightHits[0].face.name);
+                            
+                            let localLightStrength = 0;
+                            for (const lightHit of lightHits) {
+                                const localAlpha = lightHit.face.material.a / 256;
+                                const localStrength = (1 - localLightStrength) * localAlpha;
+                                localLightStrength += localStrength;
+
+                                const dist = light.worldPosition.sub(hit.point).len();
+                                const strength = light.intensity / Math.pow(1 + (dist / light.distance), light.decay);
+
+                                lightStrength += localStrength * strength;
+        
+                                if (localLightStrength > 0.999) {
+                                    break;
+                                }
+                            }
+                        }*/
+
+                    }
+                    //#endregion
+
+                    //#region pixel color
+                    const colors: [Intersection, number][] = [];
+                    if (rendererConfig.alpha) {
+                        let strength = 0;
+                        for (const hit of hits) {
+                            const localAlpha = hit.face.material.a / 256;
+                            const localStrength = (1 - strength) * localAlpha;
+                            strength += localStrength;
+                            colors.push([hit, localStrength]);
+    
+                            if (strength > 0.999) {
+                                break;
+                            }
+                        }
+                    } else {
+                        const [hit] = hits;
+                        colors.push([hit, 1]);
+                    }
+                    //#endregion
+
+                    const { r, g, b, a }: Material = colors.reduce((acc, [hit, s], i) => {
+                        const [r, g, b] = hit.face.material.getColorAt(hit.face, hit.point);
+                        const q = hit.angle / 180;
+                        acc.r += r * q * s * lightAlpha[i]; 
+                        acc.g += g * q * s * lightAlpha[i]; 
+                        acc.b += b * q * s * lightAlpha[i]; 
                         acc.a += s * 256;
                         return acc;
                     }, new Material(0, 0, 0, 0));
-                    
                     this.setPixel(x, y, r, g, b, a);
                 }
             }

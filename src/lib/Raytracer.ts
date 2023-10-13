@@ -15,6 +15,9 @@ export default class Raytracer {
 
     constructor(private readonly scene: Scene, public readonly camera: Camera) {
         if (rendererConfig.optimizer?.type == "qt") {
+            if (rendererConfig.hasLight) {
+                throw new Error("Lighting is not supported with the QuadTree optimizer");
+            }
             this.qt = QuadTree.ofScene(scene, camera);
         }
 
@@ -24,27 +27,31 @@ export default class Raytracer {
         }
     }
 
-    *castRay(dir: Vector3): IterableIterator<Intersection> {
+    *castRay(origin: Vector3, dir: Vector3): IterableIterator<Intersection> {
         const normDir = dir.norm();
 
         if (!rendererConfig.optimizer) {
             for (const mesh of this.scene) {
                 for (const origFace of mesh.geometry.faces) {
-                    yield* this.checkRay(mesh, origFace, normDir);
+                    yield* this.checkRay(mesh, origFace, origin, normDir);
                 }
             }
         } else if (this.qt) {
-            for (const [mesh, face] of this.qt.intersects(dir)) {
-                yield* this.checkRay(mesh, face, normDir);
+            for (const [mesh, face] of this.qt.intersects(normDir)) {
+                yield* this.checkRay(mesh, face, origin, normDir);
             }
         } else if (this.ot) {
-            for (const [mesh, face] of this.ot.intersects(this.camera.position, dir)) {
-                yield* this.checkRay(mesh, face, normDir);
+            for (const [mesh, face] of this.ot.intersects(origin, normDir)) {
+                yield* this.checkRay(mesh, face, origin, normDir);
             }
         }
     }
 
-    private *checkRay(mesh: Mesh, face: Face, normDir: Vector3): IterableIterator<Intersection> {
+    intersectOrder(origin: Vector3, dir: Vector3): Intersection[] {
+        return Array.from(this.castRay(origin, dir)).sort((a, b) => a.distance - b.distance);
+    }
+
+    private *checkRay(mesh: Mesh, face: Face, origin: Vector3, normDir: Vector3): IterableIterator<Intersection> {
         // Möller–Trumbore
         const edge1 = face.v.sub(face.u);
         const edge2 = face.w.sub(face.u);
@@ -56,7 +63,7 @@ export default class Raytracer {
         }
 
         const f = 1.0 / a;
-        const s = this.camera.position.sub(face.u);
+        const s = origin.sub(face.u);
         const u = f * s.dot(h);
         if (u < 0.0 || u > 1.0) {
             return;
@@ -70,11 +77,11 @@ export default class Raytracer {
 
         const t = f * edge2.dot(q);
         if (t > Raytracer.EPSILON) {
-            const point = this.camera.position.add(normDir.multScalar(t));
+            const point = origin.add(normDir.multScalar(t));
             const dotProduct = normDir.dot(face.normal);
             const clampedDotProduct = Math.max(-1, Math.min(1, dotProduct));
             const angle = Math.acos(clampedDotProduct) * (180 / Math.PI);
-            const distance = this.camera.position.sub(point).len();
+            const distance = origin.sub(point).len();
 
             const dist1 = this.distancePointToSegment(point, face.u, face.v);
             const dist2 = this.distancePointToSegment(point, face.v, face.w);

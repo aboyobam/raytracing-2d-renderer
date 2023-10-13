@@ -1,4 +1,8 @@
 export default class Vector3 {
+    static get ZERO() {
+        return new Vector3();
+    }
+
     static midpoint(a: Vector3, b: Vector3): Vector3 {
         return a.add(b).multScalar(1 / 2);
     }
@@ -79,9 +83,13 @@ export default class Vector3 {
         if (length === 0) return new Vector3();
 
         if (length === 1) {
-            return this.clone();
+            return this;
         }
         
         return new Vector3(this.x / length, this.y / length, this.z / length);
+    }
+
+    pretty(fixed = 3) {
+        return `Vector3(x = ${this.x.toFixed(fixed)}, y = ${this.y.toFixed(fixed)}, z = ${this.z.toFixed(fixed)})`;
     }
 }

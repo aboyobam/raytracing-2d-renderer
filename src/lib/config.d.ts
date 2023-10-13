@@ -2,16 +2,17 @@ export default interface AppConfig {
     file: string;
     width: number;
     height: number;
-    smoothing: boolean;
     threads: number;
     renderer: {
         width: number;
+        hasLight: boolean;
         height: number;
         cameraFov: number;
         cameraNear: number;
         threadSync: boolean;
         wireframe?: number;
         optimizer?: Optimizer;
+        alpha: boolean;
     };
 }
 
