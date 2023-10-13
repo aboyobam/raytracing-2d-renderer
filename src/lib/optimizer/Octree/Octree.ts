@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import Ocnode from "./Ocnode";
 import Vector3 from "@/Vector3";
 import Scene from "@/Scene";
@@ -16,7 +17,7 @@ export default class Octree {
 
         this.root = new Ocnode(
             Vector3.midpoint(min, max),
-            Math.max(max.x - min.x, max.y - min.y, max.z - min.z) / 2
+            Decimal.max(max.x.sub(min.x), max.y.sub(min.y), max.z.sub(min.z)).div(2)
         );
 
         for (const mesh of scene) {

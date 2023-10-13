@@ -4,6 +4,7 @@ import Raytracer, { Intersection } from "./Raytracer";
 import Scene from "./Scene";
 import type AppConfig from "./config";
 import { rendererConfig } from "./setup";
+import Decimal from "decimal.js"
 
 export default class Renderer {
     private readonly pixels: Uint8ClampedArray;
@@ -55,7 +56,7 @@ export default class Renderer {
                     .norm();
 
                 const hits = rc.intersectOrder(camera.position, dir);
-                
+
                 if (!hits.length) {
                     this.setPixel(x, y, 230, 230, 230);
                     continue;
@@ -65,7 +66,7 @@ export default class Renderer {
 
                 if (this.config.wireframe) {
                     for (const hit of hits) {
-                        if (hit.edgeDist < this.config.wireframe) {
+                        if (hit.edgeDist.lte(this.config.wireframe)) {
                             const { r, g, b } = hit.face.material ?? hit.mesh.material;
                             this.setPixel(x, y, r, g, b);
                         }
@@ -90,7 +91,7 @@ export default class Renderer {
                                         
                                         if (lightHit.face === hit.face) {
                                             const dist = light.worldPosition.sub(lightHit.point).len();
-                                            lightStrength = localStrength * light.intensity / Math.pow(1 + (dist / light.distance), light.decay);;
+                                            lightStrength = localStrength * light.intensity / Math.pow(dist.div(light.distance).add(1).toNumber(), light.decay);;
                                             break;
                                         }
                 
@@ -109,16 +110,16 @@ export default class Renderer {
                                 const lightDir = hit.point.sub(light.worldPosition).norm();
                                 const [lightHit] = rc.intersectOrder(light.worldPosition, lightDir);
 
-                                if (lightHit.face !== hit.face) {
-                                    console.log("light no hit", [
-                                        lightDir.pretty(20),
-                                        dir.pretty(20),
-                                    ]);
-                                    continue;
-                                }
+                                // if (lightHit.face !== hit.face) {
+                                //     console.log("light no hit", [
+                                //         lightDir.pretty(20),
+                                //         dir.pretty(20),
+                                //     ]);
+                                //     continue;
+                                // }
 
                                 const dist = light.worldPosition.sub(hit.point).len();
-                                lightStrength += light.intensity / Math.pow(1 + (dist / light.distance), light.decay);
+                                lightStrength += light.intensity / Math.pow(dist.div(light.distance).add(1).toNumber(), light.decay);
                             }
 
                             lightAlpha[0] = lightStrength;
@@ -171,7 +172,7 @@ export default class Renderer {
 
                     const { r, g, b, a }: Material = colors.reduce((acc, [hit, s], i) => {
                         const [r, g, b] = hit.face.material.getColorAt(hit.face, hit.point);
-                        const q = hit.angle / 180;
+                        const q = hit.angle.toNumber() / 180;
                         acc.r += r * q * s * lightAlpha[i]; 
                         acc.g += g * q * s * lightAlpha[i]; 
                         acc.b += b * q * s * lightAlpha[i]; 

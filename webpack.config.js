@@ -30,7 +30,8 @@ export default {
   resolve: {
     extensions: ['.ts', '.js'],
     alias: {
-      '@': path.resolve(__dirname, 'src/lib/')
+      '@': path.resolve(__dirname, 'src/lib/'),
+      'decimal.js': path.resolve(__dirname, './src/StubDecimal.ts')
     }
   },
   devServer: {

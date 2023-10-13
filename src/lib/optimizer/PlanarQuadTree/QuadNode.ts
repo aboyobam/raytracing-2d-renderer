@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Face from "@/Face";
 import Vector3 from "@/Vector3";
 import QuadTree, { MeshAndFace } from "./QuadTree";

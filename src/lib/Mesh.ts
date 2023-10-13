@@ -2,6 +2,7 @@ import Geometry from "./Geometry";
 import Material from "./Material";
 import Object3D from "./Object3D";
 import Vector3 from "./Vector3";
+import Decimal from "decimal.js";
 
 export default class Mesh extends Object3D {
     constructor(public readonly geometry: Geometry, public readonly material: Material) {
@@ -24,22 +25,24 @@ export default class Mesh extends Object3D {
 
     rotate(axis: Vector3, angle: number): void {
         const radians = angle * (Math.PI / 180);
-        const cos = Math.cos(radians);
-        const sin = Math.sin(radians);
+        const cos = Decimal.cos(radians);
+        const sin = Decimal.cos(radians);
         const { x: u, y: v, z: w } = axis.norm();
     
         const applyRotation = (vertex: Vector3) => {
-            const rotatedX = vertex.x * (cos + u * u * (1 - cos))
-                            + vertex.y * (u * v * (1 - cos) - w * sin)
-                            + vertex.z * (u * w * (1 - cos) + v * sin);
-                            
-            const rotatedY = vertex.x * (v * u * (1 - cos) + w * sin)
-                            + vertex.y * (cos + v * v * (1 - cos))
-                            + vertex.z * (v * w * (1 - cos) - u * sin);
-    
-            const rotatedZ = vertex.x * (w * u * (1 - cos) - v * sin)
-                            + vertex.y * (w * v * (1 - cos) + u * sin)
-                            + vertex.z * (cos + w * w * (1 - cos));
+            const oneMinusCos = new Decimal(1).sub(cos);
+
+            const rotatedX = vertex.x.mul(cos.add(u.mul(u).mul(oneMinusCos)))
+                            .add(vertex.y.mul(u.mul(v).mul(oneMinusCos).sub(w.mul(sin))))
+                            .add(vertex.z.mul(u.mul(w).mul(oneMinusCos).add(v.mul(sin))));
+            
+            const rotatedY = vertex.x.mul(v.mul(u).mul(oneMinusCos).add(w.mul(sin)))
+                            .add(vertex.y.mul(cos.add(v.mul(v).mul(oneMinusCos))))
+                            .add(vertex.z.mul(v.mul(w).mul(oneMinusCos).sub(u.mul(sin))));
+            
+            const rotatedZ = vertex.x.mul(w.mul(u).mul(oneMinusCos).sub(v.mul(sin)))
+                            .add(vertex.y.mul(w.mul(v).mul(oneMinusCos).add(u.mul(sin))))
+                            .add(vertex.z.mul(cos.add(w.mul(w).mul(oneMinusCos))));
     
             vertex.x = rotatedX;
             vertex.y = rotatedY;

@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import Face from "@/Face";
 import Vector3 from "@/Vector3";
 import Octree, { MeshAndFace } from "./Octree";
@@ -9,7 +10,7 @@ export default class Ocnode {
     private children: DoubleOcnode[][];
     private readonly entries: MeshAndFace[] = [];
 
-    constructor(public readonly position: Vector3, public readonly size: number, private readonly depth: number = 0) {}
+    constructor(public readonly position: Vector3, public readonly size: Decimal, private readonly depth: number = 0) {}
 
     add(mesh: Mesh, face: Face) {
         // matches children + no children
@@ -17,20 +18,20 @@ export default class Ocnode {
             const [min, max] = face.getBoundingBox();
 
             for (const x of [0, 1]) {
-                const bx = this.position.x - this.size;
-                if (min.x < (bx + this.size * x) || max.x > (bx + this.size * (x + 1))) {
+                const bx = this.position.x.sub(this.size);
+                if (min.x.lt(bx.add(this.size.mul(x))) || max.x.gt(bx.add(this.size.mul(x + 1)))) {
                     continue;
                 }
 
                 for (const y of [0, 1]) {
-                    const by = this.position.y - this.size;
-                    if (min.y < (by + this.size * y) || max.y > (by + this.size * (y + 1))) {
+                    const by = this.position.y.sub(this.size);
+                    if (min.y.lt(by.add(this.size.mul(y))) || max.y.gt(by.add(this.size.mul(y + 1)))) {
                         continue;
                     }
 
                     for (const z of [0, 1]) {
-                        const bz = this.position.z - this.size;
-                        if (min.z < (bz + this.size * z) || max.z > (bz + this.size * (z + 1))) {
+                        const bz = this.position.z.sub(this.size);
+                        if (min.z.lt(bz.add(this.size.mul(z))) || max.z.gt(bz.add(this.size.mul(z + 1)))) {
                             continue;
                         }
 
@@ -55,16 +56,16 @@ export default class Ocnode {
     }
 
     *intersects(origin: Vector3, dir: Vector3): IterableIterator<MeshAndFace> {
-        let tMin = -Infinity;
-        let tMax = Infinity;
+        let tMin = new Decimal(-Infinity);
+        let tMax = new Decimal(Infinity);
     
         const bounds = [
-            this.position.x - this.size,
-            this.position.x + this.size,
-            this.position.y - this.size,
-            this.position.y + this.size,
-            this.position.z - this.size,
-            this.position.z + this.size,
+            this.position.x.sub(this.size),
+            this.position.x.add(this.size),
+            this.position.y.sub(this.size),
+            this.position.y.add(this.size),
+            this.position.z.sub(this.size),
+            this.position.z.add(this.size),
         ];
     
         const direction = ['x', 'y', 'z'] as const;
@@ -72,30 +73,30 @@ export default class Ocnode {
         for (let i = 0; i < direction.length; i++) {
             const localDir = direction[i];
 
-            if (Math.abs(dir[localDir]) < Number.EPSILON) {
-                if (origin[localDir] < (bounds[i * 2]) || origin[localDir] > (bounds[i * 2 + 1])) {
+            if (dir[localDir].abs().lt(Number.EPSILON)) {
+                if (origin[localDir].lt(bounds[i * 2]) || origin[localDir].gt(bounds[i * 2 + 1])) {
                     return;
                 }
             } else {
-                let t1 = (bounds[i * 2] - origin[localDir]) / dir[localDir];
-                let t2 = (bounds[i * 2 + 1] - origin[localDir]) / dir[localDir];
+                let t1 = bounds[i * 2].sub(origin[localDir]).div(dir[localDir]);
+                let t2 = bounds[i * 2 + 1].sub(origin[localDir]).div(dir[localDir]);
     
-                if (t1 > t2) {
+                if (t1.gt(t2)) {
                     const temp = t1;
                     t1 = t2;
                     t2 = temp;
                 };
     
-                tMin = t1 > tMin ? t1 : tMin;
-                tMax = t2 < tMax ? t2 : tMax;
+                tMin = t1.gt(tMin) ? t1 : tMin;
+                tMax = t2.lt(tMax) ? t2 : tMax;
     
-                if (tMin > tMax) {
+                if (tMin.gt(tMax)) {
                     return;
                 }
             }
         }
     
-        if (tMin < 0 && tMax < 0) {
+        if (tMin.lt(0) && tMax.lt(0)) {
             return;
         }
 
@@ -115,8 +116,8 @@ export default class Ocnode {
                 const col: Partial<DoubleOcnode> = [];
 
                 for (const z of [0, 1]) {
-                    const newPos = this.position.add(new Vector3((x - 0.5) * this.size, (y - 0.5) * this.size, (z - 0.5) * this.size));
-                    col.push(new Ocnode(newPos, this.size / 2, this.depth + 1));
+                    const newPos = this.position.add(new Vector3(this.size.mul(x - 0.5), this.size.mul(y - 0.5), this.size.mul(z - 0.5)));
+                    col.push(new Ocnode(newPos, this.size.div(2), this.depth + 1));
                 }
 
                 row.push(col as DoubleOcnode);
@@ -131,15 +132,15 @@ export default class Ocnode {
     private fullFit(face: Face) {
         const [min, max] = face.getBoundingBox();
 
-        if (min.x < (this.position.x - this.size) || max.x > (this.position.x + this.size)) {
+        if (min.x.lt(this.position.x.sub(this.size)) || max.x.gt(this.position.x.add(this.size))) {
             return false;
         }
 
-        if (min.y < (this.position.y - this.size) || max.y > (this.position.y + this.size)) {
+        if (min.y.lt(this.position.y.sub(this.size)) || max.y.gt(this.position.y.add(this.size))) {
             return false;
         }
 
-        if (min.z < (this.position.z - this.size) || max.z > (this.position.z + this.size)) {
+        if (min.z.lt(this.position.z.sub(this.size)) || max.z.gt(this.position.z.add(this.size))) {
             return false;
         }
 

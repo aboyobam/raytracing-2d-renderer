@@ -4,6 +4,9 @@ import Scene from "./Scene";
 import type AppConfig from "./config";
 import Octree from "./optimizer/Octree/Octree";
 import QuadTree from "./optimizer/PlanarQuadTree/QuadTree";
+import Decimal from "decimal.js";
+
+Decimal.set({ precision: 10 });
 
 let _buildScene: (context: SetupContext) => void | Promise<void>;
 let _data: {
@@ -70,7 +73,11 @@ async function doSetup() {
     camera.position.set(0, 0, 0);
 
     scene.build();
+    console.log("render", Decimal.precision);
+    
     renderer.render(camera, scene);
+    console.log("done");
+    
     // self.close();
 }
 

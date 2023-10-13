@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import Face from "./Face";
 import Vector3 from "./Vector3";
 
@@ -30,21 +31,21 @@ export default class Material {
         const d11 = v1.dot(v1);
         const d20 = v2.dot(v0);
         const d21 = v2.dot(v1);
-        const denom = d00 * d11 - d01 * d01;
+        const denom = d00.mul(d11).sub(d01.mul(d01));
 
-        const v = (d11 * d20 - d01 * d21) / denom;
-        const w = (d00 * d21 - d01 * d20) / denom;
-        const u = 1.0 - v - w;
+        const v = (d11.mul(d20).sub(d01.mul(d21))).div(denom);
+        const w = (d00.mul(d21).sub(d01.mul(d20))).div(denom);
+        const u = new Decimal(1).sub(v).sub(w);
 
-        const interpolatedU = face.uvMap[0].x * u + face.uvMap[1].x * v + face.uvMap[2].x * w;
-        const interpolatedV = face.uvMap[0].y * u + face.uvMap[1].y * v + face.uvMap[2].y * w;
+        const interpolatedU = face.uvMap[0].x.mul(u).add(face.uvMap[1].x.mul(v)).add(face.uvMap[2].x.mul(w));
+        const interpolatedV = face.uvMap[0].y.mul(u).add(face.uvMap[1].y.mul(v)).add(face.uvMap[2].y.mul(w));
 
         // Convert UV coordinates to pixel coordinates
-        const pixelX = Math.floor(interpolatedU * face.material.texture.width);
-        const pixelY = Math.floor(interpolatedV * face.material.texture.height);
+        const pixelX = interpolatedU.mul(face.material.texture.width).floor();
+        const pixelY = interpolatedV.mul(face.material.texture.height).floor();
 
         // Get pixel data
-        const index = (pixelY * face.material.texture.width + pixelX) * 4;  // RGBA has 4 components
+        const index = (pixelY.mul(face.material.texture.width).add(pixelX)).mul(4).round().toNumber();  // RGBA has 4 components
         return [
             face.material.texture.data[index],
             face.material.texture.data[index + 1],

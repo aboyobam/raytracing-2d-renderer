@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import Camera from "./Camera";
 import Face from "./Face";
 import Mesh from "./Mesh";
@@ -48,7 +49,7 @@ export default class Raytracer {
     }
 
     intersectOrder(origin: Vector3, dir: Vector3): Intersection[] {
-        return Array.from(this.castRay(origin, dir)).sort((a, b) => a.distance - b.distance);
+        return Array.from(this.castRay(origin, dir)).sort((a, b) => a.distance.sub(b.distance).toNumber());
     }
 
     private *checkRay(mesh: Mesh, face: Face, origin: Vector3, normDir: Vector3): IterableIterator<Intersection> {
@@ -58,64 +59,64 @@ export default class Raytracer {
         const h = normDir.cross(edge2);
         const a = edge1.dot(h);
         
-        if (a > -Raytracer.EPSILON && a < Raytracer.EPSILON) {
+        if (a.gt(-Raytracer.EPSILON) && a.lt(Raytracer.EPSILON)) {
             return;
         }
 
-        const f = 1.0 / a;
+        const f = new Decimal(1).div(a);
         const s = origin.sub(face.u);
-        const u = f * s.dot(h);
-        if (u < 0.0 || u > 1.0) {
+        const u = f.mul(s.dot(h));
+        if (u.lt(0) || u.gt(1)) {
             return;
         }
             
         const q = s.cross(edge1);
-        const v = f * normDir.dot(q);
-        if (v < 0.0 || u + v > 1.0) {
+        const v = f.mul(normDir.dot(q));
+        if (v.lt(0) || u.add(v).gt(1)) {
             return;
         }
 
-        const t = f * edge2.dot(q);
-        if (t > Raytracer.EPSILON) {
+        const t = f.mul(edge2.dot(q));
+        if (t.gt(Raytracer.EPSILON)) {
             const point = origin.add(normDir.multScalar(t));
             const dotProduct = normDir.dot(face.normal);
-            const clampedDotProduct = Math.max(-1, Math.min(1, dotProduct));
-            const angle = Math.acos(clampedDotProduct) * (180 / Math.PI);
+            const clampedDotProduct = Decimal.clamp(-1, dotProduct, 1);
+            const angle = Decimal.acos(clampedDotProduct).mul(180 / Math.PI);
             const distance = origin.sub(point).len();
 
             const dist1 = this.distancePointToSegment(point, face.u, face.v);
             const dist2 = this.distancePointToSegment(point, face.v, face.w);
             const dist3 = this.distancePointToSegment(point, face.w, face.u);
-            const edgeDist = Math.min(dist1, dist2, dist3);
+            const edgeDist = Decimal.min(dist1, dist2, dist3);
 
             yield { angle, point, distance, mesh, face, edgeDist };
         }
     }
 
-    private distancePointToSegment(point: Vector3, a: Vector3, b: Vector3): number {
+    private distancePointToSegment(point: Vector3, a: Vector3, b: Vector3): Decimal {
         const ab = b.sub(a);
         const ap = point.sub(a);
         const bp = point.sub(b);
         const e = ap.dot(ab);
         
-        if (e <= 0) {
+        if (e.lte(0)) {
             return ap.len();
         }
 
         const f = ab.dot(ab);
-        if (e >= f) {
+        if (e.gte(f)) {
             return bp.len();
         }
     
-        return Math.sqrt(ap.dot(ap) - (e * e) / f);
+        return Decimal.sqrt(ap.dot(ap).sub(e.mul(e)).div(f));
     }
 }
 
 export interface Intersection {
-    angle: number;
+    angle: Decimal;
     point: Vector3;
-    distance: number;
+    distance: Decimal;
     mesh: Mesh;
     face: Face;
-    edgeDist: number;
+    edgeDist: Decimal;
 }
