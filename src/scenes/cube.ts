@@ -6,7 +6,7 @@ import setup from "@/setup";
 
 setup(({ scene, camera }) => {
     const geo = new CubeGeometry(10, 10, 10);
-    const mat = new Material(256, 0, 0, 255);
+    const mat = new Material(255, 0, 0, 255);
     const mesh = new Mesh(geo, mat);
     mesh.position.set(-2, -10, 29);
     scene.add(mesh);

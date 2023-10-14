@@ -1,9 +1,26 @@
-import Camera from "./Camera";
-import Renderer from "./Renderer";
-import Scene from "./Scene";
 import type AppConfig from "./config";
+import Camera from "./Camera";
+import Scene from "./Scene";
 import Octree from "./optimizer/Octree/Octree";
 import QuadTree from "./optimizer/PlanarQuadTree/QuadTree";
+import AlphaRenderer from "./renderer/AlphaRenderer";
+import LightAlphaRenderer from "./renderer/LightAlphaRenderer";
+import LightRenderer from "./renderer/LightRenderer";
+import { Renderer, RendererConstructor } from "./renderer/Renderer";
+import StubRenderer from "./renderer/StubRenderer";
+import WireframeRenderer from "./renderer/WireframeRenderer";
+import StubReflectRenderer from "./renderer/StubReflectRenderer";
+import LightReflectRenderer from "./renderer/LightReflectRenderer";
+
+const renderers: Record<AppConfig['renderer']['renderer']['type'], RendererConstructor> = {
+    light: LightRenderer,
+    alpha: AlphaRenderer,
+    lightAlpha: LightAlphaRenderer,
+    wireframe: WireframeRenderer,
+    stub: StubRenderer,
+    stubReflect: StubReflectRenderer,
+    lightReflect: LightReflectRenderer
+};
 
 let _buildScene: (context: SetupContext) => void | Promise<void>;
 let _data: {
@@ -48,9 +65,10 @@ export default function setup(buildScene: typeof _buildScene) {
 }
 
 async function doSetup() {
+    const RendererClass = renderers[_data.config.renderer.type];
     const scene = new Scene();
-    const renderer = new Renderer(_data.config, _data.buffer, _data.mod, _data.total);
-    const camera = new Camera(_data.config.cameraFov, renderer.config.width / renderer.config.height, _data.config.cameraNear);
+    const renderer = new RendererClass(_data.buffer, _data.mod, _data.total, _data.config.renderer);
+    const camera = new Camera(_data.config.cameraFov, rendererConfig.width / rendererConfig.height, _data.config.cameraNear);
 
     await _buildScene({ scene, camera, renderer, config: _data.config });
 

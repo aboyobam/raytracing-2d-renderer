@@ -17,11 +17,13 @@ setup(async ({ scene, camera }) => {
     camera.lookAt(mesh.position);
 
     const floor = PlaneGeometry.asFloor(mesh, 1);
-    scene.add(new Mesh(floor, Material.RED));
+    scene.add(new Mesh(floor, Material.WHITE));
 
-    for (const corner of floor.vertecies) {
+    for (let i = 1; i <= floor.vertecies.length; i++) {
+        const edge = [floor.vertecies[i - 1], floor.vertecies[i % floor.vertecies.length]] as const;
+        const mid = Vector3.midpoint(...edge);
         const light = new Light(1.5, 10, 1.5);
-        light.position.copy(corner.add(new Vector3(0, 5, 0)));
+        light.position.copy(mid.add(new Vector3(0, 4, 0)));
         scene.addLight(light);
     }
 });

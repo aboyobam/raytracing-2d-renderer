@@ -1,18 +1,30 @@
 import type AppConfig from "@/config";
 
 const config: AppConfig = {
-    file: 'porsche',
+    file: 'reflect',
     width: 500,
     height: 500,
     threads: 10,
     renderer: {
-        //wireframe: 0.1,
         width: 500,
         height: 500,
         cameraFov: 45,
         cameraNear: 2,
-        hasLight: true,
-        alpha: false,
+        renderer: {
+            type: "lightReflect",
+            maxReflectionDepth: 3,
+            maxLightBounce: 1,
+            lightInpercisionEpsilon: 1e-12,
+            minStrength: 1e-3
+        },
+        /*renderer: {
+            type: "stub",
+            colorMultiplier: 2
+        },*/
+        /*renderer: {
+            type: "stubReflect",
+            maxDepth: 3
+        },*/
         optimizer: {
             type: "ot",
             maxDepth: 10

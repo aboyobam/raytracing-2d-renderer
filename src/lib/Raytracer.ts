@@ -8,16 +8,13 @@ import QuadTree from "./optimizer/PlanarQuadTree/QuadTree";
 import { rendererConfig } from "./setup";
 
 export default class Raytracer {
-    static readonly EPSILON = 1e-7;
+    static readonly EPSILON = 1e-9;
 
     private readonly qt: QuadTree;
     private readonly ot: Octree;
 
-    constructor(private readonly scene: Scene, public readonly camera: Camera) {
+    constructor(public readonly scene: Scene, public readonly camera: Camera) {
         if (rendererConfig.optimizer?.type == "qt") {
-            if (rendererConfig.hasLight) {
-                throw new Error("Lighting is not supported with the QuadTree optimizer");
-            }
             this.qt = QuadTree.ofScene(scene, camera);
         }
 
@@ -82,13 +79,18 @@ export default class Raytracer {
             const clampedDotProduct = Math.max(-1, Math.min(1, dotProduct));
             const angle = Math.acos(clampedDotProduct) * (180 / Math.PI);
             const distance = origin.sub(point).len();
+            const reflectionAdjustment = face.normal.multScalar(2 * dotProduct);
+            const outDir = normDir.sub(reflectionAdjustment).norm();
 
-            const dist1 = this.distancePointToSegment(point, face.u, face.v);
-            const dist2 = this.distancePointToSegment(point, face.v, face.w);
-            const dist3 = this.distancePointToSegment(point, face.w, face.u);
-            const edgeDist = Math.min(dist1, dist2, dist3);
+            let edgeDist = 0;
+            if (rendererConfig.renderer.type == "wireframe") {
+                const dist1 = this.distancePointToSegment(point, face.u, face.v);
+                const dist2 = this.distancePointToSegment(point, face.v, face.w);
+                const dist3 = this.distancePointToSegment(point, face.w, face.u);
+                edgeDist = Math.min(dist1, dist2, dist3);
+            }
 
-            yield { angle, point, distance, mesh, face, edgeDist };
+            yield { angle, point, distance, mesh, face, edgeDist, outDir };
         }
     }
 
@@ -118,4 +120,5 @@ export interface Intersection {
     mesh: Mesh;
     face: Face;
     edgeDist: number;
+    outDir: Vector3;
 }

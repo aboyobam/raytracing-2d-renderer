@@ -3,13 +3,18 @@ import Vector3 from "./Vector3";
 
 export default class Material {
     static readonly all: Record<string, Material> = {};
+
+    static readonly WHITE = new Material(255, 255, 255, 255, "white");
+    static readonly RED = new Material(255, 0, 0, 255, "red");
+    static readonly GREEN = new Material(0, 255, 0, 255, "green");
+    static readonly BLUE = new Material(0, 0, 255, 255, "blue");
     
     texture?: ImageData;
     specular: number = 0;
 
-    static readonly NONE = new Material(127, 127, 127, 256, "none");
+    static readonly NONE = new Material(127, 127, 127, 255, "none");
 
-    constructor(public r = 256, public g = 256, public b = 256, public a = 256, public readonly name?: string) {
+    constructor(public r = 255, public g = 255, public b = 255, public a = 255, public readonly name?: string) {
         if (name) {
             Material.all[name] = this;
         }
@@ -17,7 +22,7 @@ export default class Material {
 
     getColorAt(face: Face, point: Vector3) {
         if (!this.texture || !face.uvMap) {
-            return [this.r, this.g, this.b];
+            return [this.r, this.g, this.b] as const;
         }
 
         const [a, b, c] = face;
@@ -39,16 +44,21 @@ export default class Material {
         const interpolatedU = face.uvMap[0].x * u + face.uvMap[1].x * v + face.uvMap[2].x * w;
         const interpolatedV = face.uvMap[0].y * u + face.uvMap[1].y * v + face.uvMap[2].y * w;
 
-        // Convert UV coordinates to pixel coordinates
         const pixelX = Math.floor(interpolatedU * face.material.texture.width);
         const pixelY = Math.floor(interpolatedV * face.material.texture.height);
 
-        // Get pixel data
-        const index = (pixelY * face.material.texture.width + pixelX) * 4;  // RGBA has 4 components
+        const index = (pixelY * face.material.texture.width + pixelX) * 4;
         return [
             face.material.texture.data[index],
             face.material.texture.data[index + 1],
             face.material.texture.data[index + 2]
-        ];
+        ] as const;
+    }
+
+    clone() {
+        const newMat = new Material(this.r, this.g, this.b, this.a, this.name + "_cloned");
+        newMat.specular = this.specular;
+        newMat.texture = this.texture;
+        return newMat;
     }
 }

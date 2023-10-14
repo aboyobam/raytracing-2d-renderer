@@ -45,7 +45,8 @@ export default class Mesh extends Object3D {
             vertex.y = rotatedY;
             vertex.z = rotatedZ;
         };
-    
+
+        
         this.geometry.vertecies.forEach(applyRotation);
         this.geometry.faces.forEach(face => applyRotation(face.normal));
     }

@@ -20,13 +20,6 @@ export default class Scene extends Object3D {
     addLight(light: Light) {
         light.parent = this;
         this.lights.push(light);
-
-        //#region [DUMMY]
-        const cube = new CubeGeometry(0.05, 0.05, 0.05);
-        const cubeMesh = new Mesh(cube, new Material(0, 0, 0, 256));
-        cubeMesh.position.copy(light.position);
-        // this.add(cubeMesh);
-        //#endregion
     }
 
     build() {

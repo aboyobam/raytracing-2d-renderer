@@ -5,13 +5,17 @@ export default interface AppConfig {
     threads: number;
     renderer: {
         width: number;
-        hasLight: boolean;
         height: number;
         cameraFov: number;
         cameraNear: number;
-        wireframe?: number;
         optimizer?: Optimizer;
-        alpha: boolean;
+        renderer:   LightRendererSetup |
+                    LightAlphaRendererSetup |
+                    AlphaRendererSetup |
+                    WireframeRendererSetup |
+                    StubRendererSetup |
+                    StubReflectRendererSetup |
+                    LightReflectRendererSetup;
     };
 }
 
@@ -23,6 +27,43 @@ interface OtOptimizer {
 interface QtOptimizer {
     type: "qt";
     maxSize: number;
+}
+
+export interface LightRendererSetup {
+    type: "light";
+    lightInpercisionEpsilon: number;
+}
+
+export interface LightAlphaRendererSetup {
+    type: "lightAlpha";
+    lightInpercisionEpsilon: number;
+}
+
+export interface AlphaRendererSetup {
+    type: "alpha";
+}
+
+export interface WireframeRendererSetup {
+    type: "wireframe";
+    wireframe: number;
+}
+
+export interface StubRendererSetup {
+    type: "stub";
+    colorMultiplier: number;
+}
+
+export interface StubReflectRendererSetup {
+    type: "stubReflect";
+    maxDepth: number;
+}
+
+export interface LightReflectRendererSetup {
+    type: "lightReflect";
+    maxReflectionDepth: number;
+    maxLightBounce: number;
+    lightInpercisionEpsilon: number;
+    minStrength: number;
 }
 
 type Optimizer = OtOptimizer | QtOptimizer;
