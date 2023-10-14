@@ -44,7 +44,7 @@ export default class Raytracer {
         }
     }
 
-    intersectOrder(origin: Vector3, dir: Vector3): Intersection[] {
+    intersectOrder(origin: Vector3, dir: Vector3, filter = () => true): Intersection[] {
         return Array.from(this.castRay(origin, dir)).sort((a, b) => a.distance - b.distance);
     }
 

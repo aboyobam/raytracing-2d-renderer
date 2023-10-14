@@ -3,11 +3,14 @@ import Vector3 from "@/Vector3";
 import BaseRenderer from "./BaseRenderer";
 import { LightReflectRendererSetup } from "@/config";
 import Face from "@/Face";
+import { Intersection } from "@/Raytracer";
+import MonteCarloEstimator from "./MonteCarloEstimator";
 
 class LightReflectRenderer extends BaseRenderer {
     declare protected readonly localConfig: LightReflectRendererSetup;
 
     private reflectiveFaces: Face[];
+    private monteCarlo: MonteCarloEstimator;
 
     protected beforeRender(): void {
         this.reflectiveFaces = [];
@@ -19,6 +22,8 @@ class LightReflectRenderer extends BaseRenderer {
                 }
             }
         }
+
+        this.monteCarlo = new MonteCarloEstimator(this.localConfig.monteCarsoSamples);
     }
 
     protected calulatePixel(origin: Vector3, dir: Vector3, lightStrength = 0, depth = 0): [number, number, number, number] {
@@ -28,39 +33,7 @@ class LightReflectRenderer extends BaseRenderer {
             return;
         }
 
-        /*for (const light of this.scene.lights) {
-            const lightDir = hit.point.sub(light.worldPosition).norm();
-            const [lightHit, ...rest] = this.rc.intersectOrder(light.worldPosition, lightDir);
-
-            if (!lightHit) {
-                continue;
-            }
-
-            if (lightHit.face !== hit.face) {
-                let foundElse = false;
-                
-                for (const other of rest) {
-                    if ((other.distance - lightHit.distance) > this.localConfig.lightInpercisionEpsilon) {
-                        break;
-                    }
-                    
-                    if (other.face === hit.face) {
-                        foundElse = true;
-                        break;
-                    }
-                }
-
-                if (!foundElse) {
-                    continue;
-                }
-            }
-            
-            lightStrength += light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
-            lightStrength += this.calcLight(hit.point);
-        }*/
-
-        const localLight = this.calcLight(hit.point);
-        lightStrength += localLight;
+        lightStrength += this.calculateLight(hit);
 
         const q = (hit.angle / 180) * lightStrength;
         const [br, bg, bb] = hit.face.material.getColorAt(hit.face, hit.point);
@@ -92,53 +65,84 @@ class LightReflectRenderer extends BaseRenderer {
         return baseColor;
     }
 
-    private findReflectivePointOnFace(from: Vector3, to: Vector3, face: Face): Vector3 {
-        const dir = to.sub(from);
-        const r = dir.sub(face.normal.multScalar(2 * dir.dot(face.normal)));
-        return from.sub(r);
-    }
+    private calculateLight(hit: Intersection) {
+        let lightStrength = 0;
 
-    private calcLight(point: Vector3, origin: Vector3 = point, strength = 1, distance = 0, depth = 0): number {
-        let totalIllumination = 0;
-    
-        // Direct lighting calculation
+        // direct lumination
         for (const light of this.scene.lights) {
-            const dirToLight = light.worldPosition.sub(point);
-            const hits = this.rc.intersectOrder(point, dirToLight.norm());
-    
-            if (hits.length === 0) {
-                const dist = distance + dirToLight.len();
-                totalIllumination += strength * light.intensity / Math.pow(1 + (dist / light.distance), light.decay);
+            const lightDir = hit.point.sub(light.worldPosition).norm();
+            const [lightHit, ...rest] = this.rc.intersectOrder(light.worldPosition, lightDir);
+
+            if (!lightHit) {
+                continue;
             }
-        }
-    
-        // Indirect lighting from reflections
-        if (depth < this.localConfig.maxLightBounce) {
-            for (const face of this.reflectiveFaces) {
-                // Find the reflection point on this face that would direct light towards our point
-                const reflectionPoint = this.findReflectivePointOnFace(point, origin, face);
-        
-                if (reflectionPoint) {
-                    // Check if there's a direct path from the reflection point on the face to our original point
-                    const dirToReflection = reflectionPoint.sub(point);
-                    const hits = this.rc.intersectOrder(point, dirToReflection.norm());
-        
-                    if (hits.length === 0) {
-                        // No obstructions or the first hit is the reflection point on the face
-                        totalIllumination += this.calcLight(
-                            reflectionPoint,
-                            point,
-                            strength * face.material.specular,
-                            distance + dirToReflection.len(),
-                            depth + 1
-                        ); // Recursive call
+
+            if (lightHit.face !== hit.face) {
+                let foundElse = false;
+                
+                for (const other of rest) {
+                    if ((other.distance - lightHit.distance) > this.localConfig.lightInpercisionEpsilon) {
+                        break;
+                    }
+                    
+                    if (other.face === hit.face) {
+                        foundElse = true;
+                        break;
                     }
                 }
+
+                if (!foundElse) {
+                    continue;
+                }
             }
+            
+            lightStrength += light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
         }
-    
-        return totalIllumination;
+
+        // indirect lumination
+        for (const dir of this.monteCarlo) {
+            lightStrength += this.trackLight(hit.point, dir) * (hit.face.normal.angleTo(dir.multScalar(-1)) / Math.PI);
+        }
+
+        return lightStrength;
+    }
+
+    private trackLight(from: Vector3, dir: Vector3, strength = 1, distance = 0, depth = 0) {
+        const [hit] = this.rc.intersectOrder(from, dir);
+        if (!hit || !hit.face.material.illusive) {
+            return 0;
+        }
+
+        strength *= hit.face.material.illusive;
+        let localStrenth = 0;
+
+        for (const light of this.scene.lights) {
+            const dirToPoint = hit.point.sub(light.worldPosition).norm();
+            const [lightHit] = this.rc.intersectOrder(light.worldPosition, dirToPoint);
+
+            if (!lightHit || lightHit.face !== hit.face) {
+                continue;
+            }
+
+            const angle = lightHit.outDir.angleTo(dir);
+            const impactStrength = strength * (angle / Math.PI);
+            localStrenth += impactStrength * light.intensity / Math.pow(1 + ((distance + lightHit.distance) / light.distance), light.decay);
+        }
+
+        if (depth < this.localConfig.maxLightBounce) {
+            localStrenth += this.trackLight(
+                hit.point,
+                hit.outDir,
+                strength,
+                distance + hit.distance,
+                depth + 1
+            );
+        }
+
+        return localStrenth;
     }
 }
+
+export type TLightReflectRenderer = LightReflectRenderer;
 
 export default LightReflectRenderer satisfies RendererConstructor;

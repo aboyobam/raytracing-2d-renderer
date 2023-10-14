@@ -6,6 +6,7 @@ export default interface AppConfig {
     renderer: {
         width: number;
         height: number;
+        autoClose: boolean;
         cameraFov: number;
         cameraNear: number;
         optimizer?: Optimizer;
@@ -62,6 +63,7 @@ export interface LightReflectRendererSetup {
     type: "lightReflect";
     maxReflectionDepth: number;
     maxLightBounce: number;
+    monteCarsoSamples: number;
     lightInpercisionEpsilon: number;
     minStrength: number;
 }

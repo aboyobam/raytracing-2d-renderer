@@ -11,6 +11,7 @@ export default class Material {
     
     texture?: ImageData;
     specular: number = 0;
+    illusive: number = 0;
 
     static readonly NONE = new Material(127, 127, 127, 255, "none");
 

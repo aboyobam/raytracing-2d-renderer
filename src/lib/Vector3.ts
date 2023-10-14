@@ -70,6 +70,14 @@ export default class Vector3 {
     dot(v: Vector3) {
         return this.x * v.x + this.y * v.y + this.z * v.z;
     }
+
+    angleTo(v: Vector3) {
+        const dotProduct = this.dot(v);
+        const magnitudeA = this.len();
+        const magnitudeB = v.len();
+        const value = Math.max(-1, Math.min(1, dotProduct / (magnitudeA * magnitudeB)));
+        return Math.acos(value);
+    }
     
     cross(v: Vector3) {
         const x = this.y * v.z - this.z * v.y;
