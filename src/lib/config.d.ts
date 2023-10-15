@@ -62,10 +62,12 @@ export interface StubReflectRendererSetup {
 export interface LightReflectRendererSetup {
     type: "lightReflect";
     maxReflectionDepth: number;
-    maxLightBounce: number;
-    monteCarsoSamples: number;
+    maxLightDepth: number;
+    monteCarloSamples: number;
     lightInpercisionEpsilon: number;
-    minStrength: number;
+    indirectIllumination: boolean;
+    indirectIlluminationDelta: number;
+    indirectIlluminationDivider: number;
 }
 
 type Optimizer = OtOptimizer | QtOptimizer;

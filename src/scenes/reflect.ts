@@ -10,7 +10,6 @@ setup(({ scene, camera, renderer }) => {
     const mirrorMat = Material.WHITE;
     const mirror = new Mesh(mirrorGeo, mirrorMat);
     mirror.rotate(new Vector3(0, 1, 0).norm(), -45);
-    // mirror.rotate(new Vector3(1, 0, 0).norm(), -45);
     const illusiv = mirrorMat.clone();
     illusiv.illusive = 1;
     illusiv.specular = 0.5;
@@ -20,7 +19,7 @@ setup(({ scene, camera, renderer }) => {
     const cubeMat = Material.RED;
     const cube = new Mesh(cubeGeo, cubeMat);
     cube.position.x = 5;
-    cube.rotate(new Vector3(0, 1, 0), -20);
+    // cube.rotate(new Vector3(0, 1, 0), -20);
 
     for (let i = 0; i < 12; i += 2) {
         cube.geometry.faces[i].material = Material.GREEN;
@@ -29,10 +28,10 @@ setup(({ scene, camera, renderer }) => {
     scene.add(mirror);
     scene.add(cube);
 
-    camera.position.set(0, 10, -15);
+    camera.position.set(0, 0, -15);
     camera.lookAt(Vector3.ZERO);
 
-    const light = new Light(2, 10, 1.5);
+    const light = new Light(5, 10, 1.5);
     light.position.copy(camera.position);
     scene.addLight(light);
 

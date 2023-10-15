@@ -97,6 +97,12 @@ export default class Vector3 {
         return new Vector3(this.x / length, this.y / length, this.z / length);
     }
 
+    *[Symbol.iterator]() {
+        yield this.x;
+        yield this.y;
+        yield this.z;
+    }
+
     pretty(fixed = 3) {
         return `Vector3(x = ${this.x.toFixed(fixed)}, y = ${this.y.toFixed(fixed)}, z = ${this.z.toFixed(fixed)})`;
     }

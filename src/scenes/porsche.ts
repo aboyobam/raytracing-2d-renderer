@@ -19,9 +19,9 @@ setup(async ({ scene, camera }) => {
     const floor = PlaneGeometry.asFloor(mesh, 1);
     scene.add(new Mesh(floor, Material.RED));
 
-    for (const corner of floor.vertecies) {
+    /*for (const corner of floor.vertecies) {
         const light = new Light(1.5, 10, 1.5);
         light.position.copy(corner.add(new Vector3(0, 5, 0)));
         scene.addLight(light);
-    }
+    }*/
 });

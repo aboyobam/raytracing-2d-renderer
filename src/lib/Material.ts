@@ -4,20 +4,28 @@ import Vector3 from "./Vector3";
 export default class Material {
     static readonly all: Record<string, Material> = {};
 
-    static readonly WHITE = new Material(255, 255, 255, 255, "white");
-    static readonly RED = new Material(255, 0, 0, 255, "red");
-    static readonly GREEN = new Material(0, 255, 0, 255, "green");
-    static readonly BLUE = new Material(0, 0, 255, 255, "blue");
+    static readonly WHITE = new Material(255, 255, 255, "white");
+    static readonly RED = new Material(255, 0, 0, "red");
+    static readonly GREEN = new Material(0, 255, 0, "green");
+    static readonly BLUE = new Material(0, 0, 255, "blue");
+    private static materialCounter = 0;
     
     texture?: ImageData;
     specular: number = 0;
     illusive: number = 0;
+    alpha: number = 1;
 
-    static readonly NONE = new Material(127, 127, 127, 255, "none");
+    static readonly NONE = new Material(127, 127, 127, "none");
 
-    constructor(public r = 255, public g = 255, public b = 255, public a = 255, public readonly name?: string) {
-        if (name) {
-            Material.all[name] = this;
+    constructor(public r = 255, public g = 255, public b = 255, public readonly name?: string, alpha?: number) {
+        if (!this.name) {
+            this.name = "Material.auto." + Material.materialCounter++;
+        }
+
+        Material.all[this.name] = this;
+
+        if (typeof alpha === "number") {
+            this.alpha = alpha;
         }
     };
 
@@ -57,7 +65,7 @@ export default class Material {
     }
 
     clone() {
-        const newMat = new Material(this.r, this.g, this.b, this.a, this.name + "_cloned");
+        const newMat = new Material(this.r, this.g, this.b, this.name + "_cloned");
         newMat.specular = this.specular;
         newMat.texture = this.texture;
         return newMat;

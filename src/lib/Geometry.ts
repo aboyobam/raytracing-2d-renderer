@@ -2,7 +2,11 @@ import Face from "./Face";
 import Vector3 from "./Vector3";
 
 export default class Geometry {
-    constructor(public readonly vertecies: Vector3[], public readonly faces: Face[]) {}
+    public readonly faces: Face[];
+
+    constructor(private readonly vertecies: Vector3[], faces: Face[]) {
+        this.faces = faces.map(face => face.clone());
+    }
 
     getBoundingBox() {
         let min = new Vector3(Infinity, Infinity, Infinity);

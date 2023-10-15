@@ -47,8 +47,12 @@ export default class Mesh extends Object3D {
         };
 
         
-        this.geometry.vertecies.forEach(applyRotation);
-        this.geometry.faces.forEach(face => applyRotation(face.normal));
+        this.geometry.faces.forEach(face => {
+            applyRotation(face.u);
+            applyRotation(face.v);
+            applyRotation(face.w);
+            applyRotation(face.normal);
+        });
     }
 
     *[Symbol.iterator](): IterableIterator<Mesh> {

@@ -7,7 +7,6 @@ export default class Face {
     readonly name: string;
 
     uvMap: Readonly<[Vector3, Vector3, Vector3]>;
-    private _uvNormals: [number, number, number];
 
     constructor(
         public u: Vector3,
@@ -25,7 +24,7 @@ export default class Face {
             this.u.clone(),
             this.v.clone(),
             this.w.clone(),
-            this.normal,
+            this.normal.clone(),
             this.material,
             this.name + "_cloned"
         );

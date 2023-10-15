@@ -11,6 +11,7 @@ import StubRenderer from "./renderer/StubRenderer";
 import WireframeRenderer from "./renderer/WireframeRenderer";
 import StubReflectRenderer from "./renderer/StubReflectRenderer";
 import LightReflectRenderer from "./renderer/LightReflectRenderer";
+import Material from "./Material";
 
 const renderers: Record<AppConfig['renderer']['renderer']['type'], RendererConstructor> = {
     light: LightRenderer,
@@ -79,6 +80,8 @@ async function doSetup() {
     renderer.render(camera, scene);
     self.postMessage("done");
 
+    console.log(Object.keys(Material.all));
+    
     if (_data.config.autoClose) {
         self.close();
     }

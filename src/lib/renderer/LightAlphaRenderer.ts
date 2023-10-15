@@ -25,8 +25,7 @@ class LightAlphaRenderer extends BaseRenderer {
 
                 let strength = 0;
                 for (const lightHit of lightHits) {
-                    const localAlpha = lightHit.face.material.a / 255;
-                    const localStrength = (1 - strength) * localAlpha;
+                    const localStrength = (1 - strength) * hit.face.material.alpha;
                     strength += localStrength;
                     
                     if (lightHit.face === hit.face) {
@@ -47,8 +46,7 @@ class LightAlphaRenderer extends BaseRenderer {
         const colors: [Intersection, number][] = [];
         let strength = 0;
         for (const hit of hits) {
-            const localAlpha = hit.face.material.a / 255;
-            const localStrength = (1 - strength) * localAlpha;
+            const localStrength = (1 - strength) * hit.face.material.alpha;
             strength += localStrength;
             colors.push([hit, localStrength]);
 
@@ -57,17 +55,17 @@ class LightAlphaRenderer extends BaseRenderer {
             }
         }
 
-        const { r, g, b, a }: Material = colors.reduce((acc, [hit, s], i) => {
+        const { r, g, b, alpha }: Material = colors.reduce((acc, [hit, s], i) => {
             const [r, g, b] = hit.face.material.getColorAt(hit.face, hit.point);
             const q = hit.angle / 180;
             acc.r += r * q * s * lightAlpha[i]; 
             acc.g += g * q * s * lightAlpha[i]; 
             acc.b += b * q * s * lightAlpha[i]; 
-            acc.a += s * 255;
+            acc.alpha += s * 255;
             return acc;
-        }, new Material(0, 0, 0, 0));
+        }, new Material(0, 0, 0, null, 5));
 
-        return [r, g, b, a];
+        return [r, g, b, alpha];
     }
 }
 

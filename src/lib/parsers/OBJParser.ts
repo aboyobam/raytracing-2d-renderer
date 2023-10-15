@@ -115,7 +115,7 @@ export default class OBJParser {
                     currentMaterialName = tokens[1];
                     if (!materials[currentMaterialName]) {
                         // Provide default values for r, g, b, a and name
-                        currentMaterial = new Material(255, 255, 255, 255, currentMaterialName);
+                        currentMaterial = new Material(255, 255, 255, currentMaterialName);
                         materials[currentMaterialName] = currentMaterial;
                     } else {
                         currentMaterial = materials[currentMaterialName];

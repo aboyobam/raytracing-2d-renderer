@@ -4,10 +4,12 @@ const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'],
     lightReflect: {
         type: "lightReflect",
         maxReflectionDepth: 3,
-        maxLightBounce: 3,
-        monteCarsoSamples: 500,
+        maxLightDepth: 3,
         lightInpercisionEpsilon: 1e-12,
-        minStrength: 1e-3
+        indirectIllumination: false,
+        monteCarloSamples: 300_000,
+        indirectIlluminationDelta: 0.2,
+        indirectIlluminationDivider: 2
     },
     stub: {
         type: "stub",
@@ -24,7 +26,7 @@ const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'],
 }
 
 const config: AppConfig = {
-    file: 'porsche-side-light',
+    file: 'blender-scene',
     width: 500,
     height: 500,
     threads: 10,
@@ -34,7 +36,7 @@ const config: AppConfig = {
         cameraFov: 45,
         cameraNear: 2,
         autoClose: false,
-        renderer: rendererConfigs.light,
+        renderer: rendererConfigs.lightReflect,
         optimizer: {
             type: "ot",
             maxDepth: 10
