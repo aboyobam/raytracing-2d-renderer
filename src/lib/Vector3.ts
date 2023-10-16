@@ -1,3 +1,7 @@
+import serializable from "./serializable";
+
+@serializable("Vector3")
+
 export default class Vector3 {
     static get ZERO() {
         return new Vector3();
@@ -40,6 +44,10 @@ export default class Vector3 {
         this.x = v.x;
         this.y = v.y;
         this.z = v.z;
+    }
+
+    neg() {
+        return this.multScalar(-1);
     }
 
     add(v: Vector3) {

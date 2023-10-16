@@ -9,25 +9,26 @@ export default interface AppConfig {
         autoClose: boolean;
         cameraFov: number;
         cameraNear: number;
-        optimizer?: Optimizer;
+        optimizer: OtOptimizer;
         renderer:   LightRendererSetup |
                     LightAlphaRendererSetup |
                     AlphaRendererSetup |
                     WireframeRendererSetup |
                     StubRendererSetup |
                     StubReflectRendererSetup |
-                    LightReflectRendererSetup;
+                    LightReflectRendererSetup |
+                    AllRendererSetup;
+        photonMapperSetup: {
+            maxDepth: number;
+            maxSize: number;
+            samples: number;
+            hasAlpha: boolean;
+        }
     };
 }
 
 interface OtOptimizer {
-    type: "ot";
     maxDepth: number;
-}
-
-interface QtOptimizer {
-    type: "qt";
-    maxSize: number;
 }
 
 export interface LightRendererSetup {
@@ -62,12 +63,16 @@ export interface StubReflectRendererSetup {
 export interface LightReflectRendererSetup {
     type: "lightReflect";
     maxReflectionDepth: number;
-    maxLightDepth: number;
-    monteCarloSamples: number;
     lightInpercisionEpsilon: number;
     indirectIllumination: boolean;
     indirectIlluminationDelta: number;
     indirectIlluminationDivider: number;
 }
 
-type Optimizer = OtOptimizer | QtOptimizer;
+export interface AllRendererSetup {
+    type: "all";
+    maxReflectionDepth: number;
+    indirectIllumination: boolean;
+    indirectIlluminationDelta: number;
+    indirectIlluminationDivider: number;
+}

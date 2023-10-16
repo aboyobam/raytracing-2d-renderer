@@ -11,33 +11,15 @@ const imageData = ctx.getImageData(0, 0, config.renderer.width, config.renderer.
 
 document.body.appendChild(canvas);
 
-const workers: Worker[] = [];
-
-let finished = 0;
-const start = performance.now();
-
-for (let mod = 0; mod < config.threads; mod++) {
-    const worker = new Worker("/js/" + config.file + ".bundle.js");
-    worker.postMessage({
-        type: "config",
-        data: {
-            mod, total: config.threads,
-            config: config.renderer,
-            buffer: viewBuffer
-        }
-    });
-
-    workers.push(worker);
-
-    worker.onmessage = (event) => {
-        if (event.data == "done") {
-            finished++;
-            if (finished == config.threads) {
-                console.log("Rendering time:", performance.now() - start);
-            }
-        }
+const worker = new Worker("/js/scenes/" + config.file + ".bundle.js");
+worker.postMessage({
+    type: "config",
+    data: {
+        threads: config.threads,
+        config: config.renderer,
+        buffer: viewBuffer
     }
-}
+});
 
 function draw() {
     imageData.data.set(pixels);

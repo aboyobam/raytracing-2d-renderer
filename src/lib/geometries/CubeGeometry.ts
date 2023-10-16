@@ -14,7 +14,7 @@ export default class CubeGeometry extends Geometry {
             }
         }
         
-        super(vertecies, [
+        super([
             new Face(vertecies[2], vertecies[3], vertecies[6], new Vector3(0, 1, 0), null, "cube_top_1"),
             new Face(vertecies[3], vertecies[6], vertecies[7], new Vector3(0, 1, 0), null, "cube_top_2"), // top
             new Face(vertecies[0], vertecies[1], vertecies[4], new Vector3(0, -1, 0), null, "cube_bottom_1"),

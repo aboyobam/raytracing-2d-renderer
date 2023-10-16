@@ -19,7 +19,7 @@ export default class PlaneGeometry extends Geometry {
         const topRight = new Vector3(bottomRight.x, topLeft.y, topLeft.z);
         const bottomLeft = new Vector3(topLeft.x, bottomRight.y, bottomRight.z);
 
-        super([topLeft, topRight, bottomRight, bottomLeft], [
+        super([
             new Face(topLeft, topRight, bottomRight, normal, null, "Plane_top"),
             new Face(topLeft, bottomLeft, bottomRight, normal, null, "Plane_bottom")
         ]);

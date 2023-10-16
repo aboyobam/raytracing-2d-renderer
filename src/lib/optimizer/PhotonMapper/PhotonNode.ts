@@ -20,7 +20,7 @@ export default class PhotonNode {
                 const total = this.entries.push(photon);
                 if (total >= this.tree.maxSize) {
                     this.subdivide();
-                    const ogEntries = this.entries.splice(0, this.entries.length);
+                    const ogEntries: Photon[] = this.entries.splice(0, this.entries.length);
                     
                     for (const entry of ogEntries) {
                         this.add(entry);

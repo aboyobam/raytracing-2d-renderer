@@ -1,6 +1,8 @@
 import Material from "./Material";
 import Vector3 from "./Vector3";
+import serializable from "./serializable";
 
+@serializable("Face")
 export default class Face {
     private static counter = 0;
     private boundingBox: [Vector3, Vector3];
@@ -20,7 +22,7 @@ export default class Face {
     };
 
     clone() {
-        return new Face(
+        const clone = new Face(
             this.u.clone(),
             this.v.clone(),
             this.w.clone(),
@@ -28,6 +30,14 @@ export default class Face {
             this.material,
             this.name + "_cloned"
         );
+
+        clone.uvMap = this.uvMap;
+        clone.boundingBox = this.boundingBox;
+        return clone;
+    }
+
+    isFromOutside(dir: Vector3) {
+        return dir.dot(this.normal) < 0;
     }
 
     getBoundingBox(): [Vector3, Vector3] {

@@ -1,21 +1,33 @@
 import Face from "./Face";
 import Vector3 from "./Vector3";
+import serializable from "./serializable";
 
+@serializable("Material")
 export default class Material {
     static readonly all: Record<string, Material> = {};
 
-    static readonly WHITE = new Material(255, 255, 255, "white");
-    static readonly RED = new Material(255, 0, 0, "red");
-    static readonly GREEN = new Material(0, 255, 0, "green");
-    static readonly BLUE = new Material(0, 0, 255, "blue");
+    static get WHITE() {
+        return Material.all["white"] || new Material(255, 255, 255, "white");
+    }
+    static get RED() { 
+        return Material.all["red"] || new Material(255, 0, 0, "red");
+    }
+    static get GREEN() { 
+        return Material.all["green"] || new Material(0, 255, 0, "green");
+    }
+    static get BLUE() { 
+        return Material.all["blue"] || new Material(0, 0, 255, "blue");
+    }
+    static get NONE() { 
+        return Material.all["none"] || new Material(127, 127, 127, "none");
+    }
+
     private static materialCounter = 0;
     
     texture?: ImageData;
     specular: number = 0;
     illusive: number = 0;
     alpha: number = 1;
-
-    static readonly NONE = new Material(127, 127, 127, "none");
 
     constructor(public r = 255, public g = 255, public b = 255, public readonly name?: string, alpha?: number) {
         if (!this.name) {
@@ -31,6 +43,10 @@ export default class Material {
 
     getColorAt(face: Face, point: Vector3) {
         if (!this.texture || !face.uvMap) {
+            if (this.texture) {
+                console.log(face.uvMap);
+            }
+            
             return [this.r, this.g, this.b] as const;
         }
 

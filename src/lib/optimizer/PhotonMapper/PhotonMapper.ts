@@ -10,6 +10,9 @@ interface PhotonMapperConfig {
     maxSize: number;
     samples: number;
     maxDepth: number;
+    hasAlpha: boolean;
+    offset?: number;
+    skip?: number;
 }
 
 export default class PhotonMapper {
@@ -25,7 +28,7 @@ export default class PhotonMapper {
     }
 
     private build() {
-        const monteCarlo = new MonteCarloEstimator(this.config.samples);
+        const monteCarlo = new MonteCarloEstimator(this.config.samples, this.config.offset ?? 0, this.config.skip ?? 1);
         
         for (const light of this.scene.lights) {
             for (const dir of monteCarlo) {
@@ -47,19 +50,28 @@ export default class PhotonMapper {
             yield new Photon(hit.point, intensity);
         }
 
-        if (!hit.face.material.illusive) {
-            return;
-        }
-
         if (depth < this.config.maxDepth) {
-            yield* this.trackLight(
-                light, 
-                hit.point,
-                hit.outDir,
-                strength * hit.face.material.illusive,
-                distance + hit.distance,
-                depth + 1
-            );
+            if (hit.face.material.illusive) {
+                yield* this.trackLight(
+                    light, 
+                    hit.point,
+                    hit.outDir,
+                    strength * hit.face.material.illusive * hit.face.material.alpha,
+                    distance + hit.distance,
+                    depth + 1
+                );
+            }
+
+            if (this.config.hasAlpha && hit.face.material.alpha < 1) {
+                yield* this.trackLight(
+                    light, 
+                    hit.point,
+                    dir,
+                    strength * (1 - hit.face.material.illusive) * (1 - hit.face.material.alpha),
+                    distance + hit.distance,
+                    depth + 1
+                );
+            }
         }
     }
 }

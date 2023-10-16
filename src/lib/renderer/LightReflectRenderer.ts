@@ -3,21 +3,10 @@ import Vector3 from "@/Vector3";
 import BaseRenderer from "./BaseRenderer";
 import { LightReflectRendererSetup } from "@/config";
 import { Intersection } from "@/Raytracer";
-import PhotonMapper from "@/optimizer/PhotonMapper/PhotonMapper";
 
 class LightReflectRenderer extends BaseRenderer {
     declare protected readonly localConfig: LightReflectRendererSetup;
-    private photonMapper: PhotonMapper;
-
-    protected beforeRender(): void {
-        if (this.localConfig.indirectIllumination) {
-            this.photonMapper = new PhotonMapper(this.scene, this.rc, {
-                maxDepth: this.localConfig.maxLightDepth,
-                maxSize: 200,
-                samples: this.localConfig.monteCarloSamples
-            });
-        }
-    }
+    static readonly usesPhotonMapper = true;
 
     protected calulatePixel(origin: Vector3, dir: Vector3, depth = 0): [number, number, number, number] {
         const [hit] = this.rc.intersectOrder(origin, dir);
@@ -89,7 +78,7 @@ class LightReflectRenderer extends BaseRenderer {
                 }
             }
             
-            const angleStrength = hit.point.angleTo(hit.face.normal) / Math.PI;
+            const angleStrength = lightDir.angleTo(hit.face.normal) / Math.PI;
             lightStrength += angleStrength * light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
         }
         
@@ -97,15 +86,14 @@ class LightReflectRenderer extends BaseRenderer {
         // indirect lumination
         if (this.localConfig.indirectIllumination) {
             const delta = this.localConfig.indirectIlluminationDelta;
-            const photons = Array.from(this.photonMapper.get(hit.point, delta));
+            const photons = Array.from(LightReflectRenderer.photonMapper.get(hit.point, delta));
             if (photons.length) {
                 const indirects = photons.map((p) => {
-                    const angleStrength = p.position.angleTo(hit.face.normal.multScalar(-1)) / Math.PI;
+                    const angleStrength = p.position.angleTo(hit.face.normal.neg()) / Math.PI;
                     const lengthStrength = delta / (delta + hit.point.sub(p.position).len());
                     return p.intensity * angleStrength * lengthStrength;
                 });
                 const indirect = indirects.reduce((acc, s) => acc + s, 0) / this.localConfig.indirectIlluminationDivider;
-                //const indirect = Math.max(0, ...indirects);
                 lightStrength += indirect;
             }
 

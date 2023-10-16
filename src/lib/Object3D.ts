@@ -1,6 +1,6 @@
 import Vector3 from "./Vector3";
 
-export default class Object3D {
+export default abstract class Object3D {
     parent?: Object3D;
 
     public readonly position = new Vector3(0, 0, 0);

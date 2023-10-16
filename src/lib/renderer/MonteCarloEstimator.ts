@@ -3,11 +3,11 @@ import Vector3 from "@/Vector3";
 export default class MonteCarloEstimator {
     readonly vertecies: Vector3[];
 
-    constructor(samples: number) {
+    constructor(samples: number, offset = 0, skip = 1) {
         const vertecies: Vector3[] = [];
         const phi = Math.PI * (3 - Math.sqrt(5));
 
-        for (let i = 0; i < samples; i++) {
+        for (let i = offset; i < samples; i += skip) {
             const y = 1 - (i / (samples - 1)) * 2;
             const radius = Math.sqrt(1 - y * y);
 

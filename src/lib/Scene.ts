@@ -3,8 +3,9 @@ import Material from "./Material";
 import Mesh from "./Mesh";
 import Object3D from "./Object3D";
 import Vector3 from "./Vector3";
-import CubeGeometry from "./geometries/CubeGeometry";
+import serializable from "./serializable";
 
+@serializable("Scene")
 export default class Scene extends Object3D {
     public readonly meshes: Mesh[] = [];
     public readonly boundingBox: [Vector3, Vector3] = [new Vector3, new Vector3];

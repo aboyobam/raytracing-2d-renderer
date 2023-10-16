@@ -1,7 +1,5 @@
-import { LightRendererSetup } from "@/config";
-import { RendererConstructor } from "./Renderer";
-import Raytracer from "@/Raytracer";
-import Light from "@/Light";
+import type { LightRendererSetup } from "@/config";
+import type { RendererConstructor } from "./Renderer";
 import Vector3 from "@/Vector3";
 import BaseRenderer from "./BaseRenderer";
 
@@ -44,10 +42,12 @@ class LightRenderer extends BaseRenderer {
                 }
             }
             
-            lightStrength += light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
+            const angleStrength = lightDir.angleTo(hit.face.normal) / Math.PI;
+            lightStrength += angleStrength * light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
         }
 
         const q = hit.angle / 180;
+
         const [br, bb, bg] = hit.face.material.getColorAt(hit.face, hit.point);
 
         return [

@@ -1,10 +1,12 @@
 import Face from "./Face";
 import Vector3 from "./Vector3";
+import serializable from "./serializable";
 
+@serializable("Geometry")
 export default class Geometry {
     public readonly faces: Face[];
 
-    constructor(private readonly vertecies: Vector3[], faces: Face[]) {
+    constructor(faces: Face[]) {
         this.faces = faces.map(face => face.clone());
     }
 

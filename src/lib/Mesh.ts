@@ -2,9 +2,11 @@ import Geometry from "./Geometry";
 import Material from "./Material";
 import Object3D from "./Object3D";
 import Vector3 from "./Vector3";
+import serializable from "./serializable";
 
+@serializable("Mesh")
 export default class Mesh extends Object3D {
-    constructor(public readonly geometry: Geometry, public readonly material: Material) {
+    constructor(public readonly geometry: Geometry, public readonly material?: Material) {
         super();
     };
 

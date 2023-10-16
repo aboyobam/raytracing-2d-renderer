@@ -91,7 +91,7 @@ export default class OBJParser {
             }
         }
 
-        return new Geometry(vertices, faces.filter(f => f.u && f.v && f.w && f.uvMap));
+        return new Geometry(faces.filter(f => f.u && f.v && f.w && f.uvMap));
     }
 
     static async loadMaterials(url: string, materials: Record<string, Material>): Promise<void> {

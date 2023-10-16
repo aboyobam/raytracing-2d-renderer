@@ -4,16 +4,21 @@ const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'],
     lightReflect: {
         type: "lightReflect",
         maxReflectionDepth: 3,
-        maxLightDepth: 3,
         lightInpercisionEpsilon: 1e-12,
         indirectIllumination: false,
-        monteCarloSamples: 300_000,
         indirectIlluminationDelta: 0.2,
-        indirectIlluminationDivider: 2
+        indirectIlluminationDivider: 1
+    },
+    all: {
+        type: "all",
+        maxReflectionDepth: 5,
+        indirectIllumination: false,
+        indirectIlluminationDelta: 0.2,
+        indirectIlluminationDivider: 3
     },
     stub: {
         type: "stub",
-        colorMultiplier: 2
+        colorMultiplier: 1
     },
     stubReflect: {
         type: "stubReflect",
@@ -26,7 +31,7 @@ const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'],
 }
 
 const config: AppConfig = {
-    file: 'blender-scene',
+    file: 'glass',
     width: 500,
     height: 500,
     threads: 10,
@@ -35,11 +40,16 @@ const config: AppConfig = {
         height: 500,
         cameraFov: 45,
         cameraNear: 2,
-        autoClose: false,
-        renderer: rendererConfigs.lightReflect,
+        autoClose: true,
+        renderer: rendererConfigs.all,
         optimizer: {
-            type: "ot",
             maxDepth: 10
+        },
+        photonMapperSetup: {
+            samples: 100_000,
+            maxDepth: 5,
+            maxSize: 2000,
+            hasAlpha: true
         }
     }
 }

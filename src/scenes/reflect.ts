@@ -5,7 +5,7 @@ import Vector3 from "@/Vector3";
 import CubeGeometry from "@/geometries/CubeGeometry";
 import setup from "@/setup";
 
-setup(({ scene, camera, renderer }) => {
+setup(({ scene, camera }) => {
     const mirrorGeo = new CubeGeometry(3, 3, 0.1);
     const mirrorMat = Material.WHITE;
     const mirror = new Mesh(mirrorGeo, mirrorMat);

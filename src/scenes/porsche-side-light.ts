@@ -19,11 +19,29 @@ setup(async ({ scene, camera }) => {
     const floor = PlaneGeometry.asFloor(mesh, 1);
     scene.add(new Mesh(floor, Material.WHITE));
 
-    /*for (let i = 1; i <= floor.vertecies.length; i++) {
-        const edge = [floor.vertecies[i - 1], floor.vertecies[i % floor.vertecies.length]] as const;
-        const mid = Vector3.midpoint(...edge);
+    const [fmin, fmax] = floor.getBoundingBox();
+
+    left: {
         const light = new Light(1.5, 10, 1.5);
-        light.position.copy(mid.add(new Vector3(0, 4, 0)));
+        light.position.set(fmin.x, fmin.y + 4, Vector3.midpoint(fmin, fmax).z);
         scene.addLight(light);
-    }*/
+    }
+
+    right: {
+        const light = new Light(1.5, 10, 1.5);
+        light.position.set(fmax.x, fmin.y + 4, Vector3.midpoint(fmin, fmax).z);
+        scene.addLight(light);
+    }
+
+    front: {
+        const light = new Light(1.5, 10, 1.5);
+        light.position.set(Vector3.midpoint(fmin, fmax).x, fmin.y + 4, fmin.z);
+        scene.addLight(light);
+    }
+
+    back: {
+        const light = new Light(1.5, 10, 1.5);
+        light.position.set(Vector3.midpoint(fmin, fmax).x, fmin.y + 4, fmax.z);
+        scene.addLight(light);
+    }
 });

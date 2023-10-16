@@ -1,13 +1,14 @@
 import Camera from "@/Camera";
 import Scene from "@/Scene";
 import { Renderer } from "./Renderer";
-import { rendererConfig } from "@/setup";
 import Raytracer from "@/Raytracer";
 import AppConfig from "@/config";
 import Vector3 from "@/Vector3";
-import Light from "@/Light";
+import PhotonMapper from "@/optimizer/PhotonMapper/PhotonMapper";
+import rendererConfig from "@/rendererConfig";
 
 export default abstract class BaseRenderer implements Renderer {
+    static photonMapper: PhotonMapper;
     protected readonly pixels: Uint8ClampedArray;
     protected rc: Raytracer;
     protected scene: Scene;
@@ -39,7 +40,7 @@ export default abstract class BaseRenderer implements Renderer {
         const xStep = topRight.sub(topLeft).multScalar(1 / rendererConfig.width);
         const yStep = bottomLeft.sub(topLeft).multScalar(1 / rendererConfig.height);
         
-        this.rc = new Raytracer(scene, camera);
+        this.rc = new Raytracer(scene);
         this.scene = scene;
 
         this.beforeRender?.();
@@ -56,7 +57,7 @@ export default abstract class BaseRenderer implements Renderer {
                 if (color) {
                     this.setPixel(x, y, ...color);
                 } else {
-                    this.setPixel(x, y, 240, 240, 240, 255);
+                    this.setPixel(x, y, 240, 240, 240, 0);
                 }
             }
         }
