@@ -1,7 +1,7 @@
 import Face from "@/Face";
 import Vector3 from "@/Vector3";
-import Octree, { MeshAndFace } from "./Octree";
 import Mesh from "@/Mesh";
+import Octree, { MeshAndFace } from "./Octree";
 
 type DoubleOcnode = [Ocnode, Ocnode];
 

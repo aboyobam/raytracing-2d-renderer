@@ -54,6 +54,7 @@ export interface WireframeRendererSetup {
 export interface StubRendererSetup {
     type: "stub";
     colorMultiplier: number;
+    useAngleStrength: boolean;
 }
 
 export interface StubReflectRendererSetup {

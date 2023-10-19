@@ -29,11 +29,11 @@ setup(async ({ scene, camera }) => {
 
     const camLight = new Light(2, 20, 1.3);
     camLight.position.copy(camera.position);
-    scene.addLight(camLight);
+    // scene.addLight(camLight);
 
     const planeGeo = PlaneGeometry.asFloor(mesh, offset);
     const floorMat = Material.BLUE.clone();
-    floorMat.specular = 0.6;
+    floorMat.specular = 0.9;
     const plane = new Mesh(planeGeo, floorMat);
     scene.add(plane);
     scene.add(mesh);
@@ -42,7 +42,7 @@ setup(async ({ scene, camera }) => {
     const [min, max] = geo.getBoundingBox();
     const mirrorGeo = new CubeGeometry(max.x - min.x, max.y - min.y + 6 * offset, 0.1);
     const mirrorMat = Material.WHITE.clone();
-    mirrorMat.specular = 0.5;
+    mirrorMat.specular = 0.9;
     mirrorMat.illusive = 0.8;
 
     const mirror = new Mesh(mirrorGeo, mirrorMat);

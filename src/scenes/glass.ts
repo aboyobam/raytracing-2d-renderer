@@ -14,7 +14,7 @@ setup(async ({ scene, camera }) => {
     scene.add(mesh);
 
     const mat = Material.all.glass;
-    mat.alpha = 0.5;
+    mat.alpha = 0.2;
     // mat.specular = 0.08;
     // mat.illusive = 0.2;
     mesh.rotate(new Vector3(0, 1, 0), 30);
@@ -22,10 +22,13 @@ setup(async ({ scene, camera }) => {
     camera.lookAt(mesh.position);
     camera.position.y = 2;
 
-    const light = new Light(1, 20, 1.7);
+    const light = new Light(3, 10, 3);
+    const camLight = new Light(2, 20, 2);
+    camLight.position.copy(camera.position);
+    scene.addLight(camLight)
     // light.position.x = -10;
-    light.position.copy(mesh.position.add(new Vector3(-10, 1, 0)));
-    scene.addLight(light);
+    light.position.copy(mesh.position.add(new Vector3(-2, 0, 0)));
+    // scene.addLight(light);
 
     const floor = PlaneGeometry.asFloor(mesh, 1);
     // scene.add(new Mesh(floor, Material.GREEN));

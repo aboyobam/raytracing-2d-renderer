@@ -9,7 +9,7 @@ import setup from "@/setup";
 setup(async ({ scene, camera }) => {
     const porsche = await OBJParser.parse("porsche.obj");
     
-    const mesh = new Mesh(porsche, new Material());
+    const mesh = new Mesh(porsche);
     mesh.position.set(0, 0, 6);
 
     scene.add(mesh);
@@ -19,6 +19,8 @@ setup(async ({ scene, camera }) => {
     const floor = PlaneGeometry.asFloor(mesh, 1);
     const floorMat = Material.WHITE.clone();
     floorMat.specular = 0.3;
+
+    Material.all['Material.001'].specular = 0.2;
     scene.add(new Mesh(floor, floorMat));
 
     const [fmin, fmax] = floor.getBoundingBox();

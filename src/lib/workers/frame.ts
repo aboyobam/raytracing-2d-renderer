@@ -16,6 +16,7 @@ import Photon from "../optimizer/PhotonMapper/Photon";
 import PhotonMapper from "../optimizer/PhotonMapper/PhotonMapper";
 import PhotonTree from "../optimizer/PhotonMapper/PhotonTree";
 import rendererMap from "../renderer/rendererMap";
+import Vector3 from "../Vector3";
 
 self.onmessage = ({ data: { scene, camera, photons, _data } }: { data: MessageData }) => {
     deserialize(scene);

@@ -28,6 +28,10 @@ export default class Raytracer {
     private *checkRay(mesh: Mesh, face: Face, origin: Vector3, normDir: Vector3): IterableIterator<Intersection> {
         origin = origin.add(normDir.multScalar(Raytracer.EPSILON));
 
+        if (normDir.dot(face.normal) > 0) {
+            return;
+        }
+
         // Möller–Trumbore
         const edge1 = face.v.sub(face.u);
         const edge2 = face.w.sub(face.u);

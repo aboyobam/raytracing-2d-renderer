@@ -21,7 +21,7 @@ class AllRenderer extends BaseRenderer {
         //     hit.angle = Math.abs(hit.angle - 180);
         // }
 
-        const q = hit.angle / 180 * lightStrength;
+        const q = /*hit.angle / 180 **/ lightStrength;
         const [br, bg, bb] = hit.face.material.getColorAt(hit.face, hit.point);
         const baseColor = [br * q, bg * q, bb * q, 255] as [number, number, number, number];
 
@@ -91,7 +91,7 @@ class AllRenderer extends BaseRenderer {
                 }
             }
             
-            const angleStrength = lightDir.angleTo(hit.face.isFromOutside(lightDir) ? hit.face.normal : hit.face.normal.neg()) / Math.PI;
+            const angleStrength = lightDir.angleTo(hit.face.normal) / Math.PI;
             lightStrength += alpha * angleStrength * light.intensity / Math.pow(1 + (distance / light.distance), light.decay);
         }
         

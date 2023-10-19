@@ -15,7 +15,7 @@ class StubRenderer extends BaseRenderer {
             return;
         }
 
-        const q = hit.angle / 180;
+        const q = this.localConfig.useAngleStrength ? (hit.angle / 180) : 1;
         const [br, bb, bg] = hit.face.material.getColorAt(hit.face, hit.point);
 
         return [

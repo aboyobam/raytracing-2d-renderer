@@ -36,9 +36,9 @@ export default class Face {
         return clone;
     }
 
-    isFromOutside(dir: Vector3) {
-        return dir.dot(this.normal) < 0;
-    }
+    // isFromOutside(dir: Vector3) {
+    //     return dir.dot(this.normal) < 0;
+    // }
 
     getBoundingBox(): [Vector3, Vector3] {
         if (this.boundingBox) {

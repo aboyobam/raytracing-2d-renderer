@@ -4,3 +4,4 @@
 - BPT (bidirectional path tracing) for indirect illumination
 - BVH optimizer
 - light direction (SpotLight, PointLight, DirectionalLight)
+- AmbientLight
