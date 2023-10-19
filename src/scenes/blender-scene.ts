@@ -33,7 +33,7 @@ setup(async ({ scene, camera }) => {
 
     const planeGeo = PlaneGeometry.asFloor(mesh, offset);
     const floorMat = Material.BLUE.clone();
-    // floorMat.specular = 0.3;
+    floorMat.specular = 0.6;
     const plane = new Mesh(planeGeo, floorMat);
     scene.add(plane);
     scene.add(mesh);
