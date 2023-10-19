@@ -12,6 +12,10 @@ export default abstract class BaseRenderer implements Renderer {
     protected readonly pixels: Uint8ClampedArray;
     protected rc: Raytracer;
     protected scene: Scene;
+    protected camera: Camera;
+
+    // DUMMY
+    private times: number[] = [];
 
     constructor(
         buffer: SharedArrayBuffer,
@@ -42,6 +46,7 @@ export default abstract class BaseRenderer implements Renderer {
         
         this.rc = new Raytracer(scene);
         this.scene = scene;
+        this.camera = camera;
 
         this.beforeRender?.();
 
@@ -52,7 +57,9 @@ export default abstract class BaseRenderer implements Renderer {
                     .add(yStep.multScalar(y))
                     .norm();
 
+                const start = performance.now();
                 const color = this.calulatePixel(camera.position, dir);
+                this.times.push(performance.now() - start);
 
                 if (color) {
                     this.setPixel(x, y, ...color);
@@ -61,6 +68,8 @@ export default abstract class BaseRenderer implements Renderer {
                 }
             }
         }
+
+        console.log("avg pixel time", 1000 / (this.times.reduce((a, b) => a + b) / this.times.length), "px per second");
     }
 
     protected abstract calulatePixel(origin: Vector3, dir: Vector3): [number, number, number, number];

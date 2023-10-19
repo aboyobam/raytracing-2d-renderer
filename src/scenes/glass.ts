@@ -13,23 +13,23 @@ setup(async ({ scene, camera }) => {
     mesh.position.set(0, 0, 10);
     scene.add(mesh);
 
-    const mat = Material.all.glass;
-    mat.alpha = 0.2;
-    // mat.specular = 0.08;
-    // mat.illusive = 0.2;
-    mesh.rotate(new Vector3(0, 1, 0), 30);
-    // mesh.rotate(new Vector3(1, 0, 0), 30);
-    camera.lookAt(mesh.position);
-    camera.position.y = 2;
+    Material.all.wine.alpha = 0.8;
 
-    const light = new Light(3, 10, 3);
-    const camLight = new Light(2, 20, 2);
+    const mat = Material.all.glass;
+    mat.alpha = 0.25;
+    mat.specular = 0.1;
+    // mat.illusive = 0.2;
+    camera.position.set(0, 6, -4);
+    camera.lookAt(mesh.position);
+
+    const camLight = new Light(5, 20, 2);
     camLight.position.copy(camera.position);
     scene.addLight(camLight)
-    // light.position.x = -10;
-    light.position.copy(mesh.position.add(new Vector3(-2, 0, 0)));
-    // scene.addLight(light);
 
-    const floor = PlaneGeometry.asFloor(mesh, 1);
-    // scene.add(new Mesh(floor, Material.GREEN));
+    const floor = PlaneGeometry.asFloor(mesh, 3);
+    scene.add(new Mesh(floor, Material.WHITE));
+
+    const topLight = new Light(1.2, 5, 2);
+    topLight.position.copy(mesh.position.add(new Vector3(-2, 5, 0)));
+    scene.addLight(topLight);
 });

@@ -2,7 +2,6 @@ import AppConfig from "@/config";
 import LightRenderer from "./LightRenderer";
 import AlphaRenderer from "./AlphaRenderer";
 import LightAlphaRenderer from "./LightAlphaRenderer";
-import WireframeRenderer from "./WireframeRenderer";
 import StubRenderer from "./StubRenderer";
 import StubReflectRenderer from "./StubReflectRenderer";
 import LightReflectRenderer from "./LightReflectRenderer";
@@ -13,7 +12,6 @@ const rendererMap: Record<AppConfig['renderer']['renderer']['type'], RendererCon
     light: LightRenderer,
     alpha: AlphaRenderer,
     lightAlpha: LightAlphaRenderer,
-    wireframe: WireframeRenderer,
     stub: StubRenderer,
     stubReflect: StubReflectRenderer,
     lightReflect: LightReflectRenderer,

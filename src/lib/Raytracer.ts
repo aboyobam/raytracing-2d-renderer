@@ -1,7 +1,7 @@
 import Face from "./Face";
-import Mesh from "./Mesh";
 import Scene from "./Scene";
 import Vector3 from "./Vector3";
+import intersectsBounds from "./intersects-bounds";
 import Octree from "./optimizer/Octree/Octree";
 
 export default class Raytracer {
@@ -16,8 +16,12 @@ export default class Raytracer {
     *castRay(origin: Vector3, dir: Vector3): IterableIterator<Intersection> {
         const normDir = dir.norm();
 
-        for (const [mesh, face] of this.ot.intersects(origin, normDir)) {
-            yield* this.checkRay(mesh, face, origin, normDir);
+        for (const face of this.ot.intersects(origin, normDir)) {
+            if (!intersectsBounds(origin, normDir, ...face.getBoundingBox()) || normDir.dot(face.normal) > 0) {
+                continue;
+            }
+
+            yield* this.checkRay(face, origin, normDir);
         }
     }
 
@@ -25,12 +29,8 @@ export default class Raytracer {
         return Array.from(this.castRay(origin, dir)).sort((a, b) => a.distance - b.distance);
     }
 
-    private *checkRay(mesh: Mesh, face: Face, origin: Vector3, normDir: Vector3): IterableIterator<Intersection> {
+    private *checkRay(face: Face, origin: Vector3, normDir: Vector3): IterableIterator<Intersection> {
         origin = origin.add(normDir.multScalar(Raytracer.EPSILON));
-
-        if (normDir.dot(face.normal) > 0) {
-            return;
-        }
 
         // Möller–Trumbore
         const edge1 = face.v.sub(face.u);
@@ -65,15 +65,7 @@ export default class Raytracer {
             const reflectionAdjustment = face.normal.multScalar(2 * dotProduct);
             let outDir = normDir.sub(reflectionAdjustment).norm();
 
-            let edgeDist = 0;
-            /*if (rendererConfig.renderer.type == "wireframe") {
-                const dist1 = this.distancePointToSegment(point, face.u, face.v);
-                const dist2 = this.distancePointToSegment(point, face.v, face.w);
-                const dist3 = this.distancePointToSegment(point, face.w, face.u);
-                edgeDist = Math.min(dist1, dist2, dist3);
-            }*/
-
-            yield { angle, point, distance, mesh, face, edgeDist, outDir };
+            yield { angle, point, distance, face, outDir };
         }
     }
 
@@ -100,8 +92,6 @@ export interface Intersection {
     angle: number;
     point: Vector3;
     distance: number;
-    mesh: Mesh;
     face: Face;
-    edgeDist: number;
     outDir: Vector3;
 }

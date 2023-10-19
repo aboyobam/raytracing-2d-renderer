@@ -7,6 +7,10 @@ export default class Vector3 {
         return new Vector3();
     }
 
+    static get ONE() {
+        return new Vector3(1, 1, 1);
+    }
+
     static midpoint(a: Vector3, b: Vector3): Vector3 {
         return a.add(b).multScalar(1 / 2);
     }
@@ -83,6 +87,7 @@ export default class Vector3 {
         const dotProduct = this.dot(v);
         const magnitudeA = this.len();
         const magnitudeB = v.len();
+        
         const value = Math.max(-1, Math.min(1, dotProduct / (magnitudeA * magnitudeB)));
         return Math.acos(value);
     }

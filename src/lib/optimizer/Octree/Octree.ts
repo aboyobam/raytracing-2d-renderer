@@ -4,8 +4,6 @@ import Scene from "@/Scene";
 import Face from "@/Face";
 import Mesh from "@/Mesh";
 
-export type MeshAndFace = [Mesh, Face];
-
 export default class Octree {
     static MAX_DEPTH: number;
 
@@ -21,12 +19,12 @@ export default class Octree {
 
         for (const mesh of scene) {
             for (const face of mesh.geometry.faces) {
-                this.root.add(mesh, face);
+                this.root.add(face);
             }
         }
     }
 
-    *intersects(origin: Vector3, dir: Vector3): IterableIterator<MeshAndFace> {
+    *intersects(origin: Vector3, dir: Vector3): IterableIterator<Face> {
         yield* this.root.intersects(origin, dir);
     }
 

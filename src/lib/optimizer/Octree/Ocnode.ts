@@ -1,17 +1,17 @@
 import Face from "@/Face";
 import Vector3 from "@/Vector3";
-import Mesh from "@/Mesh";
-import Octree, { MeshAndFace } from "./Octree";
+import Octree from "./Octree";
+import intersectsBounds from "@/intersects-bounds";
 
 type DoubleOcnode = [Ocnode, Ocnode];
 
 export default class Ocnode {
     private children: DoubleOcnode[][];
-    private readonly entries: MeshAndFace[] = [];
+    private readonly entries: Face[] = [];
 
     constructor(public readonly position: Vector3, public readonly size: number, private readonly depth: number = 0) {}
 
-    add(mesh: Mesh, face: Face) {
+    add(face: Face) {
         // matches children + no children
         if (!this.children && this.depth < Octree.MAX_DEPTH) {
             const [min, max] = face.getBoundingBox();
@@ -35,7 +35,7 @@ export default class Ocnode {
                         }
 
                         this.subdivide();
-                        this.children[x][y][z].add(mesh, face);
+                        this.children[x][y][z].add(face);
                         return;
                     }
                 }
@@ -45,57 +45,18 @@ export default class Ocnode {
         // has children
         for (const child of this.getAllChildren()) {
             if (child.fullFit(face)) {
-                child.add(mesh, face);
+                child.add(face);
                 return;
             }
         }
 
         // it goes in here
-        this.entries.push([mesh, face]);
+        this.entries.push(face);
     }
 
-    *intersects(origin: Vector3, dir: Vector3): IterableIterator<MeshAndFace> {
-        let tMin = -Infinity;
-        let tMax = Infinity;
-    
-        const bounds = [
-            this.position.x - this.size,
-            this.position.x + this.size,
-            this.position.y - this.size,
-            this.position.y + this.size,
-            this.position.z - this.size,
-            this.position.z + this.size,
-        ];
-    
-        const direction = ['x', 'y', 'z'] as const;
-
-        for (let i = 0; i < direction.length; i++) {
-            const localDir = direction[i];
-
-            if (Math.abs(dir[localDir]) < Number.EPSILON) {
-                if (origin[localDir] < (bounds[i * 2]) || origin[localDir] > (bounds[i * 2 + 1])) {
-                    return;
-                }
-            } else {
-                let t1 = (bounds[i * 2] - origin[localDir]) / dir[localDir];
-                let t2 = (bounds[i * 2 + 1] - origin[localDir]) / dir[localDir];
-    
-                if (t1 > t2) {
-                    const temp = t1;
-                    t1 = t2;
-                    t2 = temp;
-                };
-    
-                tMin = t1 > tMin ? t1 : tMin;
-                tMax = t2 < tMax ? t2 : tMax;
-    
-                if (tMin > tMax) {
-                    return;
-                }
-            }
-        }
-    
-        if (tMin < 0 && tMax < 0) {
+    *intersects(origin: Vector3, dir: Vector3): IterableIterator<Face> {
+        const scalarSize = Vector3.ONE.multScalar(this.size);
+        if (!intersectsBounds(origin, dir, this.position.sub(scalarSize), this.position.add(scalarSize))) {
             return;
         }
 
@@ -175,7 +136,7 @@ export default class Ocnode {
             } else {
                 parts.push(sep.repeat(indent) + "Entries:");
                 for (const entry of this.entries) {
-                    parts.push(sep.repeat(indent + 1) + "-" + entry[1].name);
+                    parts.push(sep.repeat(indent + 1) + "-" + entry.name);
                 }
             }
         }

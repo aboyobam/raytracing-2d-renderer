@@ -13,7 +13,6 @@ export default interface AppConfig {
         renderer:   LightRendererSetup |
                     LightAlphaRendererSetup |
                     AlphaRendererSetup |
-                    WireframeRendererSetup |
                     StubRendererSetup |
                     StubReflectRendererSetup |
                     LightReflectRendererSetup |
@@ -44,11 +43,6 @@ export interface LightAlphaRendererSetup {
 
 export interface AlphaRendererSetup {
     type: "alpha";
-}
-
-export interface WireframeRendererSetup {
-    type: "wireframe";
-    wireframe: number;
 }
 
 export interface StubRendererSetup {

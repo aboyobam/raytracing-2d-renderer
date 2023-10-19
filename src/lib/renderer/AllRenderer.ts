@@ -16,12 +16,7 @@ class AllRenderer extends BaseRenderer {
         }
 
         const lightStrength = this.calculateLight(hit);
-        
-        // if (hit.face.isFromOutside(dir)) {
-        //     hit.angle = Math.abs(hit.angle - 180);
-        // }
-
-        const q = /*hit.angle / 180 **/ lightStrength;
+        const q = hit.angle / 180 * lightStrength;
         const [br, bg, bb] = hit.face.material.getColorAt(hit.face, hit.point);
         const baseColor = [br * q, bg * q, bb * q, 255] as [number, number, number, number];
 
@@ -34,8 +29,8 @@ class AllRenderer extends BaseRenderer {
             const specularTarget = newStrengh && this.calulatePixel(hit.point, hit.outDir, depth + 1);
             const alphaTarget = newAlpha && this.calulatePixel(hit.point, dir, depth + 1);
 
-            const [nr, ng, nb] = specularTarget || Array(3).fill(255);
-            const [ar, ag, ab] = alphaTarget || Array(3).fill(255);
+            const [nr, ng, nb] = specularTarget || Array(3).fill(240);
+            const [ar, ag, ab] = alphaTarget || Array(3).fill(240);
 
             return [
                 (baseColor[0] * oldStrength * oldAlpha) + (nr * newStrengh) + (ar * newAlpha),
