@@ -17,7 +17,9 @@ setup(async ({ scene, camera }) => {
     camera.lookAt(mesh.position);
 
     const floor = PlaneGeometry.asFloor(mesh, 1);
-    scene.add(new Mesh(floor, Material.WHITE));
+    const floorMat = Material.WHITE.clone();
+    floorMat.specular = 0.3;
+    scene.add(new Mesh(floor, floorMat));
 
     const [fmin, fmax] = floor.getBoundingBox();
 

@@ -1,13 +1,15 @@
 import type AppConfig from "@/config";
 
+const params = new URL(location.href).searchParams;
+
 const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'], AppConfig['renderer']['renderer']>> = {
     lightReflect: {
         type: "lightReflect",
         maxReflectionDepth: 3,
         lightInpercisionEpsilon: 1e-12,
-        indirectIllumination: false,
+        indirectIllumination: true,
         indirectIlluminationDelta: 0.2,
-        indirectIlluminationDivider: 1
+        indirectIlluminationDivider: 2
     },
     all: {
         type: "all",
@@ -31,7 +33,7 @@ const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'],
 }
 
 const config: AppConfig = {
-    file: 'glass',
+    file: params.get('file') || 'glass',
     width: 500,
     height: 500,
     threads: 10,
@@ -41,15 +43,16 @@ const config: AppConfig = {
         cameraFov: 45,
         cameraNear: 2,
         autoClose: true,
-        renderer: rendererConfigs.all,
+        renderer: rendererConfigs[(params.get('renderer') as keyof typeof rendererConfigs) || 'light'],
         optimizer: {
             maxDepth: 10
         },
         photonMapperSetup: {
-            samples: 100_000,
+            samples: 200_000,
             maxDepth: 5,
             maxSize: 2000,
-            hasAlpha: true
+            hasAlpha: false,
+            enabled: true
         }
     }
 }

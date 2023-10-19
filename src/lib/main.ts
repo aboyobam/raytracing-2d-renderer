@@ -21,9 +21,22 @@ worker.postMessage({
     }
 });
 
+let hintTxt: string[] = [];
+
+worker.onmessage = ({ data }) => {
+    hintTxt.push(`Renderer: ${data.renderer}`);
+    hintTxt.push(`Faces: ${data.faces}`);
+    hintTxt.push(`Lights: ${data.lights}`);
+    hintTxt.push(`Time: ${data.time.toFixed(0)}ms`);
+}
+
 function draw() {
     imageData.data.set(pixels);
     ctx.putImageData(imageData, 0, 0);
+    ctx.textAlign = "end";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "black";
+    ctx.fillText(hintTxt.join(", "), canvas.width - 10, 10);
     requestAnimationFrame(draw);
 }
 

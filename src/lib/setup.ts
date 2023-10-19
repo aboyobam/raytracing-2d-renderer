@@ -48,7 +48,7 @@ async function doSetup() {
     const photons: Photon[] = [];
     const RendererClass = rendererMap[_data.config.renderer.type];
 
-    if (RendererClass.usesPhotonMapper) {
+    if (RendererClass.usesPhotonMapper && _data.config.photonMapperSetup.enabled) {
         await new Promise<void>(resolve => {
             let gotPhotons = 0;
 
@@ -91,7 +91,15 @@ async function doSetup() {
             if (event.data == "done") {
                 finished++;
                 if (finished == _data.threads) {
-                    console.log("Rendering time:", performance.now() - start);
+                    const time = performance.now() - start;
+                    console.log("Rendering time:", time);
+                    self.postMessage({
+                        type: "time",
+                        faces: scene.faces,
+                        lights: scene.lights.length,
+                        renderer: _data.config.renderer.type,
+                        time
+                    });
 
                     if (_data.config.autoClose) {
                         self.close();

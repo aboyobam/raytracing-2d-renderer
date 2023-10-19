@@ -57,7 +57,7 @@ export default abstract class BaseRenderer implements Renderer {
                 if (color) {
                     this.setPixel(x, y, ...color);
                 } else {
-                    this.setPixel(x, y, 240, 240, 240, 0);
+                    this.setPixel(x, y, 240, 240, 240);
                 }
             }
         }

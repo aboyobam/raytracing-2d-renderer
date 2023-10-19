@@ -11,10 +11,14 @@ export default class Scene extends Object3D {
     public readonly boundingBox: [Vector3, Vector3] = [new Vector3, new Vector3];
     public readonly lights: Light[] = [];
 
+    faces = 0;
+
     add(...objs: Mesh[]) {
         for (const obj of objs) {
             this.meshes.push(obj);
             obj.parent = this;
+
+            this.faces += obj.geometry.faces.length;
         }
     }
 

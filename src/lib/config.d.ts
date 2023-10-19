@@ -23,6 +23,7 @@ export default interface AppConfig {
             maxSize: number;
             samples: number;
             hasAlpha: boolean;
+            enabled: boolean;
         }
     };
 }
