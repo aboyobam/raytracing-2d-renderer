@@ -10,7 +10,7 @@ import Camera from "../Camera";
 import Scene from "../Scene";
 import AppConfig from "../config";
 import { deserialize } from "../serializable";
-import Octree from "../optimizer/Octree/Octree";
+import OctreeOptimizer from "../optimizer/Octree/Octree";
 import rendererConfig from "../rendererConfig";
 import Photon from "../optimizer/PhotonMapper/Photon";
 import PhotonMapper from "../optimizer/PhotonMapper/PhotonMapper";
@@ -24,7 +24,7 @@ self.onmessage = ({ data: { scene, camera, photons, _data } }: { data: MessageDa
     deserialize(photons);
 
     Object.assign(rendererConfig, _data.config);
-    Octree.MAX_DEPTH = _data.config.optimizer.maxDepth;
+    OctreeOptimizer.MAX_DEPTH = _data.config.optimizer.maxDepth;
 
     const RendererClass = rendererMap[_data.config.renderer.type];
 

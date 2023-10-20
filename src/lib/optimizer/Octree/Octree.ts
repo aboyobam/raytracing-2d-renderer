@@ -2,9 +2,9 @@ import Ocnode from "./Ocnode";
 import Vector3 from "@/Vector3";
 import Scene from "@/Scene";
 import Face from "@/Face";
-import Mesh from "@/Mesh";
+import Optimizer from "../Optimizer";
 
-export default class Octree {
+export default class OctreeOptimizer implements Optimizer {
     static MAX_DEPTH: number;
 
     private readonly root: Ocnode;

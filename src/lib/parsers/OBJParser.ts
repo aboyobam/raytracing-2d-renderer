@@ -5,6 +5,7 @@ import Vector3 from "@/Vector3";
 
 export default class OBJParser {
     static async parse(url: string): Promise<Geometry> {
+        const parts = url.split("/").slice(0, -1);
         const response = await fetch("/models/" + url);
         if (!response.ok) {
             throw new Error(`Failed to load OBJ file from ${url}: ${response.statusText}`);
@@ -26,7 +27,7 @@ export default class OBJParser {
             const command = tokens[0];
 
             if (command === 'mtllib') {
-                await this.loadMaterials(tokens[1], materials);                
+                await this.loadMaterials(tokens[1], materials, parts);                
             }
 
             if (command === 'usemtl') {
@@ -94,8 +95,8 @@ export default class OBJParser {
         return new Geometry(faces.filter(f => f.u && f.v && f.w && f.uvMap));
     }
 
-    static async loadMaterials(url: string, materials: Record<string, Material>): Promise<void> {
-        const response = await fetch("/models/" + url);
+    static async loadMaterials(url: string, materials: Record<string, Material>, parts: string[]): Promise<void> {
+        const response = await fetch("/models/" + [...parts, url].join("/"));
         if (!response.ok) {
             console.error(`Failed to load MTL file from ${url}: ${response.statusText}`);
             return;
@@ -131,7 +132,7 @@ export default class OBJParser {
                     break;
                 case 'map_Kd':
                     if (currentMaterial) {
-                        const imagePath = "/models/" + tokens[1];  // Compute path relative to the .mtl file
+                        const imagePath = "/models/" + [...parts, tokens[1]].join("/");  // Compute path relative to the .mtl file
                         const imageResponse = await fetch(imagePath);
                         const blob = await imageResponse.blob();
                         const bmp = await createImageBitmap(blob, { imageOrientation: "flipY" });

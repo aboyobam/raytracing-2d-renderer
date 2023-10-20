@@ -1,27 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ray Tracer</title>
-    <link rel="shortcut icon" href="favicon.png" type="image/x-icon">
+    <link rel="shortcut icon" href="favicon.png" type="image/x-icon" />
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            height: 100vh;
+        iframe {
+            max-width: 500px;
+            width: 100%;
+            border: 2px solid black;
         }
 
-        canvas {
-            border: 2px solid black;
+        body {
+            overflow-x: hidden;
         }
     </style>
 </head>
+
 <body>
-    <script src="js/main.bundle.js"></script>
+    <main class="m-2">
+        <div class="row">
+            <div class="col-sm-12 col-md-6">
+                <form class="row">
+                    <div class="col-lg-4 col-md-6 col-sm-12 form-group">
+                        <label for="" class="form-label">File</label>
+                        <select name="file" id="" class="form-control form-control-sm">
+                            <option value="porsche" selected>Porsche</option>
+                            <option value="porsche-reflect">Porsche (Reflect)</option>
+                            <option value="cube">Cube</option>
+                            <option value="donut">Donut</option>
+                            <option value="glass">Glass</option>
+                            <option value="mclarren">Koenigsegg</option>
+                            <option value="suzanne">Suzanne</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-sm-12 form-group">
+                        <label for="" class="form-label">Width</label>
+                        <input type="number" class="form-control form-control-sm" name="width" id="" value="500" />
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-sm-12 form-group">
+                        <label for="" class="form-label">Height</label>
+                        <input type="number" class="form-control form-control-sm" name="height" id="" value="500" />
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-sm-12 form-group">
+                        <label for="threads" class="form-label">Threads</label>
+                        <select name="threads" id="threads" class="form-control form-control-sm"></select>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-sm-12 form-group">
+                        <label for="" class="form-label">Camera FOV</label>
+                        <input type="number" class="form-control form-control-sm" name="cameraFov" id="" value="45" />
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-sm-12 form-group">
+                        <label for="" class="form-label">Renderer</label>
+                        <select name="renderer" id="" class="form-control form-control-sm">
+                            <option value="stub" selected>Stub</option>
+                            <option value="light">Light</option>
+                            <option value="lightReflect">Light (With Reflection)</option>
+                            <option value="all">Light + Reflect + Alpha</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 text-right">
+                        <button class="btn btn-sm btn-outline-warning" type="reset">
+                            Reset
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" type="submit">
+                            Run
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-sm-12 col-md-6 d-flex justify-content-center" id="frame"></div>
+        </div>
+
+        <script defer>
+            // set threads
+            threads: {
+                const el = document.querySelector("#threads");
+                for (let i = 1; i <= navigator.hardwareConcurrency; i++) {
+                    const opt = document.createElement("option");
+                    opt.textContent = i;
+                    opt.value = i;
+                    el.appendChild(opt);
+                    if (i == Math.floor(navigator.hardwareConcurrency / 2)) {
+                        opt.selected = "selected";
+                    }
+                }
+            }
+
+            document.forms[0].addEventListener("submit", (event) => {
+                event.preventDefault();
+
+                const rawData = new FormData(event.target);
+                const data = {
+                    file: rawData.get("file"),
+                    renderer: rawData.get("renderer"),
+                    cameraFov: parseInt(rawData.get("cameraFov")),
+                    width: parseInt(rawData.get("width")),
+                    height: parseInt(rawData.get("height")),
+                    threads: parseInt(rawData.get("threads")),
+                };
+                const target = document.querySelector("#frame");
+                const iframe = document.createElement("iframe");
+                iframe.frameBorder = 0;
+                iframe.src = "frame.html";
+                iframe.style.aspectRatio = `${data.width} / ${data.height}`;
+                target.innerHTML = "";
+                target.appendChild(iframe);
+
+                iframe.onload = () => {
+                    iframe.contentWindow.postMessage(data);
+                };
+
+                return false;
+            });
+        </script>
+    </main>
 </body>
+
 </html>
+
+<!--
+renderer: {
+    photonMapperSetup: {
+        samples: 200_000,
+        maxDepth: 5,
+        maxSize: 2000,
+        hasAlpha: false,
+        enabled: false
+    }
+}
+-->

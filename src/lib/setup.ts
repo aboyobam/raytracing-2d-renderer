@@ -1,7 +1,7 @@
 import type AppConfig from "./config";
 import Camera from "./Camera";
 import Scene from "./Scene";
-import Octree from "./optimizer/Octree/Octree";
+import OctreeOptimizer from "./optimizer/Octree/Octree";
 import Photon from "./optimizer/PhotonMapper/Photon";
 import rendererMap from "./renderer/rendererMap";
 
@@ -15,7 +15,7 @@ let _data: {
 self.onmessage = ({ data: { type, data } }) => {
     if (type == "config") {
         _data = data;
-        Octree.MAX_DEPTH = _data.config.optimizer.maxDepth;
+        OctreeOptimizer.MAX_DEPTH = _data.config.optimizer.maxDepth;
         
         if (_buildScene) {
             doSetup();

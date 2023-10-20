@@ -1,6 +1,6 @@
 import Face from "@/Face";
 import Vector3 from "@/Vector3";
-import Octree from "./Octree";
+import OctreeOptimizer from "./Octree";
 import intersectsBounds from "@/intersects-bounds";
 
 type DoubleOcnode = [Ocnode, Ocnode];
@@ -13,7 +13,7 @@ export default class Ocnode {
 
     add(face: Face) {
         // matches children + no children
-        if (!this.children && this.depth < Octree.MAX_DEPTH) {
+        if (!this.children && this.depth < OctreeOptimizer.MAX_DEPTH) {
             const [min, max] = face.getBoundingBox();
 
             for (const x of [0, 1]) {

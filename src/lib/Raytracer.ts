@@ -2,34 +2,56 @@ import Face from "./Face";
 import Scene from "./Scene";
 import Vector3 from "./Vector3";
 import intersectsBounds from "./intersects-bounds";
-import Octree from "./optimizer/Octree/Octree";
+import BVHOptimizer from "./optimizer/BVH/BVH";
+import OctreeOptimizer from "./optimizer/Octree/Octree";
+import Optimizer from "./optimizer/Optimizer";
+
+type Backfaces = "none" | "only" | "both";
 
 export default class Raytracer {
     static readonly EPSILON = 1e-9;
 
-    private readonly ot: Octree;
+    private readonly optimizer: Optimizer;
 
     constructor(public readonly scene: Scene) {
-        this.ot = new Octree(scene);
+        // this.optimizer = new OctreeOptimizer(scene);
+        this.optimizer = new BVHOptimizer(scene);
     }
 
-    *castRay(origin: Vector3, dir: Vector3): IterableIterator<Intersection> {
+    *castRay(origin: Vector3, dir: Vector3, backfaces: Backfaces = "none"): IterableIterator<Intersection> {
         const normDir = dir.norm();
 
-        for (const face of this.ot.intersects(origin, normDir)) {
-            if (!intersectsBounds(origin, normDir, ...face.getBoundingBox()) || normDir.dot(face.normal) > 0) {
-                continue;
+        for (const face of this.optimizer.intersects(origin, normDir)) {
+            // if (!intersectsBounds(origin, normDir, ...face.getBoundingBox())) {
+            //     continue;
+            // }
+
+            if (backfaces !== "both") {
+                const dot = normDir.dot(face.normal);
+
+                if (backfaces === "none") {
+                    if (dot > 0) {
+                        continue;
+                    }
+                } else if (backfaces === "only") {
+                    if (dot < 0) {
+                        continue;
+                    }
+                }
             }
 
-            yield* this.checkRay(face, origin, normDir);
+            const hit = this.checkRay(face, origin, normDir);
+            if (hit) {
+                yield hit;
+            }
         }
     }
 
-    intersectOrder(origin: Vector3, dir: Vector3): Intersection[] {
-        return Array.from(this.castRay(origin, dir)).sort((a, b) => a.distance - b.distance);
+    intersectOrder(origin: Vector3, dir: Vector3, backfaces: Backfaces = "none"): Intersection[] {
+        return Array.from(this.castRay(origin, dir, backfaces)).sort((a, b) => a.distance - b.distance);
     }
 
-    private *checkRay(face: Face, origin: Vector3, normDir: Vector3): IterableIterator<Intersection> {
+    private checkRay(face: Face, origin: Vector3, normDir: Vector3): Intersection {
         origin = origin.add(normDir.multScalar(Raytracer.EPSILON));
 
         // Möller–Trumbore
@@ -65,26 +87,8 @@ export default class Raytracer {
             const reflectionAdjustment = face.normal.multScalar(2 * dotProduct);
             let outDir = normDir.sub(reflectionAdjustment).norm();
 
-            yield { angle, point, distance, face, outDir };
+            return { angle, point, distance, face, outDir };
         }
-    }
-
-    private distancePointToSegment(point: Vector3, a: Vector3, b: Vector3): number {
-        const ab = b.sub(a);
-        const ap = point.sub(a);
-        const bp = point.sub(b);
-        const e = ap.dot(ab);
-        
-        if (e <= 0) {
-            return ap.len();
-        }
-
-        const f = ab.dot(ab);
-        if (e >= f) {
-            return bp.len();
-        }
-    
-        return Math.sqrt(ap.dot(ap) - (e * e) / f);
     }
 }
 

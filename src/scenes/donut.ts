@@ -9,9 +9,9 @@ setup(async ({ scene, camera }) => {
     const mesh = new Mesh(donut);
     scene.add(mesh);
 
-    const floorGeo = PlaneGeometry.asFloor(mesh, 1);
-    const flootMat = Material.RED;
-    scene.add(new Mesh(floorGeo, flootMat));
+    // const floorGeo = PlaneGeometry.asFloor(mesh, 1);
+    // const flootMat = Material.RED;
+    // scene.add(new Mesh(floorGeo, flootMat));
     
     camera.position.set(0, 1, -1.5);
     camera.lookAt(mesh.position);

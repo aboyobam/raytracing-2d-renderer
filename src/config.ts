@@ -1,6 +1,6 @@
 import type AppConfig from "@/config";
 
-const params = new URL(location.href).searchParams;
+// const params = new URL(location.href).searchParams;
 
 const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'], AppConfig['renderer']['renderer']>> = {
     lightReflect: {
@@ -33,6 +33,7 @@ const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'],
     }
 }
 
+/*
 const config: AppConfig = {
     file: params.get('file') || 'glass',
     width: 500,
@@ -58,4 +59,6 @@ const config: AppConfig = {
     }
 }
 
-export default config;
+export default config;*/
+
+export default rendererConfigs;
