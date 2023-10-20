@@ -39,8 +39,8 @@ async function doSetup() {
 
     await _buildScene({ scene, camera });
 
-    scene.position.copy(camera.position.neg());
-    camera.position.set(0, 0, 0);
+    // scene.position.copy(camera.position.neg());
+    // camera.position.set(0, 0, 0);
     scene.build();
 
     let finished = 0;

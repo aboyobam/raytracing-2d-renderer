@@ -43,10 +43,6 @@ export default class Material {
 
     getColorAt(face: Face, point: Vector3) {
         if (!this.texture || !face.uvMap) {
-            if (this.texture) {
-                console.log(face.uvMap);
-            }
-            
             return [this.r, this.g, this.b] as const;
         }
 

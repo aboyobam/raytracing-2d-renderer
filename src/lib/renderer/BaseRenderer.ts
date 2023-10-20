@@ -14,9 +14,6 @@ export default abstract class BaseRenderer implements Renderer {
     protected scene: Scene;
     protected camera: Camera;
 
-    // DUMMY
-    private times: number[] = [];
-
     constructor(
         buffer: SharedArrayBuffer,
         protected readonly offset: number,
@@ -27,7 +24,7 @@ export default abstract class BaseRenderer implements Renderer {
     }
 
     render(camera: Camera, scene: Scene): void {
-        const planeHeight = 2 * Math.tan((camera.fov / 2) * (Math.PI / 180)) * camera.near;
+        const planeHeight = 2 * Math.tan((camera.fov / 4) * (Math.PI / 180)) * camera.near;
         const planeWidth = planeHeight * camera.aspectRatio;
 
         const forward = camera.target.norm(); 
@@ -50,16 +47,17 @@ export default abstract class BaseRenderer implements Renderer {
 
         this.beforeRender?.();
 
+        
         for (let y = this.offset; y < rendererConfig.height; y += this.skip) {
             for (let x = 0; x < rendererConfig.width; x++) {
                 const dir = topLeft
                     .add(xStep.multScalar(x))
                     .add(yStep.multScalar(y))
+                    .sub(camera.position)
                     .norm();
 
-                const start = performance.now();
-                const color = this.calulatePixel(camera.position, dir);
-                this.times.push(performance.now() - start);
+                const origin = camera.position.add(camera.target.multScalar(camera.near));
+                const color = this.calulatePixel(origin, dir);
 
                 if (color) {
                     this.setPixel(x, y, ...color);
@@ -68,8 +66,6 @@ export default abstract class BaseRenderer implements Renderer {
                 }
             }
         }
-
-        console.log("avg pixel time", 1000 / (this.times.reduce((a, b) => a + b) / this.times.length), "px per second");
     }
 
     protected abstract calulatePixel(origin: Vector3, dir: Vector3): [number, number, number, number];
