@@ -23,12 +23,15 @@ export default abstract class BaseRenderer implements Renderer {
         this.pixels = new Uint8ClampedArray(buffer);
     }
 
-    render(camera: Camera, scene: Scene): void {
+    render(scene: Scene): void {
+        const [camera] = scene.cameras;
         const planeHeight = 2 * Math.tan((camera.fov / 4) * (Math.PI / 180)) * camera.near;
         const planeWidth = planeHeight * camera.aspectRatio;
 
         const forward = camera.target.norm(); 
         const right = camera.up.cross(forward).norm();
+        // const right = forward.cross(camera.up).norm();
+
         const up = forward.cross(right).norm(); 
         const center = camera.position.add(forward.multScalar(camera.near));
         const halfUp = up.multScalar(planeHeight / 2);
@@ -39,6 +42,8 @@ export default abstract class BaseRenderer implements Renderer {
         const bottomLeft = center.sub(halfUp).sub(halfRight);
 
         const xStep = topRight.sub(topLeft).multScalar(1 / rendererConfig.width);
+        // const xStep = topLeft.sub(topRight).multScalar(1 / rendererConfig.width);
+
         const yStep = bottomLeft.sub(topLeft).multScalar(1 / rendererConfig.height);
         
         this.rc = new Raytracer(scene);
@@ -50,11 +55,18 @@ export default abstract class BaseRenderer implements Renderer {
         
         for (let y = this.offset; y < rendererConfig.height; y += this.skip) {
             for (let x = 0; x < rendererConfig.width; x++) {
-                const dir = topLeft
+                /*const dir = topLeft
                     .add(xStep.multScalar(x))
                     .add(yStep.multScalar(y))
                     .sub(camera.position)
+                    .norm();*/
+
+                const dir = topRight
+                    .sub(xStep.multScalar(x)) // Notice the subtraction here
+                    .add(yStep.multScalar(y))
+                    .sub(camera.position)
                     .norm();
+                
 
                 const origin = camera.position.add(camera.target.multScalar(camera.near));
                 const color = this.calulatePixel(origin, dir);

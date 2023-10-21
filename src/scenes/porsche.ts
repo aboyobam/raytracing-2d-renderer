@@ -10,7 +10,7 @@ setup(async ({ scene, camera }) => {
     const porsche = await OBJParser.parse("porsche.obj");
     
     const mesh = new Mesh(porsche, new Material());
-    mesh.position.set(0, 0, 6);
+    mesh.position.set(0, 0, 12);
 
     scene.add(mesh);
     camera.position.set(0, 3, 0);

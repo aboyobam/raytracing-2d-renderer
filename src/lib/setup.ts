@@ -4,8 +4,10 @@ import Scene from "./Scene";
 import OctreeOptimizer from "./optimizer/Octree/Octree";
 import Photon from "./optimizer/PhotonMapper/Photon";
 import rendererMap from "./renderer/rendererMap";
+import GLTFParser from "./parsers/GLTFParser";
 
-let _buildScene: (context: SetupContext) => void | Promise<void>;
+type BuildScene = (context: SetupContext) => void | Promise<void>;
+let _build: () => Promise<Scene>;
 let _data: {
     threads: number;
     config: AppConfig['renderer'];
@@ -17,30 +19,49 @@ self.onmessage = ({ data: { type, data } }) => {
         _data = data;
         OctreeOptimizer.MAX_DEPTH = _data.config.optimizer.maxDepth;
         
-        if (_buildScene) {
+        if (_build) {
             doSetup();
         }
     }
 }
 
-export default function setup(buildScene: typeof _buildScene) {
-    _buildScene = buildScene;
+interface SetupFunction {
+    (buildScene: BuildScene): void;
+    forGLTF(path: string): void;
+}
+
+const setup: SetupFunction = function(buildScene: BuildScene) {
+    _build = async () => {
+        const scene = new Scene();
+        const camera = new Camera(_data.config.cameraFov, _data.config.width / _data.config.height, _data.config.cameraNear);
+        scene.cameras.push(camera);
+        await buildScene({ scene, camera });
+        return scene;
+    };
+
+    if (_data) {
+        doSetup();
+    }
+} as SetupFunction;
+
+setup.forGLTF = function(file: string) {
+    _build = async () => {
+        const scene = await GLTFParser.parse(file);
+        return scene;
+    }
 
     if (_data) {
         doSetup();
     }
 }
 
+export default setup;
+
 async function doSetup() {
-    const scene = new Scene();
-    const camera = new Camera(_data.config.cameraFov, _data.config.width / _data.config.height, _data.config.cameraNear);
-
+    
     const start = performance.now();
-
-    await _buildScene({ scene, camera });
-
-    // scene.position.copy(camera.position.neg());
-    // camera.position.set(0, 0, 0);
+    
+    const scene = await _build();
     scene.build();
 
     let finished = 0;
@@ -77,7 +98,6 @@ async function doSetup() {
         const renderThread = new Worker("/js/workers/frame.bundle.js");
         renderThread.postMessage({
             scene,
-            camera,
             photons,
             _data: {
                 buffer: _data.buffer,

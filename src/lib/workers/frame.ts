@@ -18,9 +18,8 @@ import PhotonTree from "../optimizer/PhotonMapper/PhotonTree";
 import rendererMap from "../renderer/rendererMap";
 import Vector3 from "../Vector3";
 
-self.onmessage = ({ data: { scene, camera, photons, _data } }: { data: MessageData }) => {
+self.onmessage = ({ data: { scene, photons, _data } }: { data: MessageData }) => {
     deserialize(scene);
-    deserialize(camera);
     deserialize(photons);
 
     Object.assign(rendererConfig, _data.config);
@@ -41,7 +40,7 @@ self.onmessage = ({ data: { scene, camera, photons, _data } }: { data: MessageDa
     }
 
     const renderer = new RendererClass(_data.buffer, _data.offset, _data.skip, _data.config.renderer);
-    renderer.render(camera, scene);
+    renderer.render(scene);
 
     self.postMessage("done");
 

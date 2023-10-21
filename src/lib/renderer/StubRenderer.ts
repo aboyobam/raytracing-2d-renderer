@@ -9,7 +9,7 @@ class StubRenderer extends BaseRenderer {
     declare protected readonly localConfig: StubRendererSetup;
 
     protected calulatePixel(origin: Vector3, dir: Vector3): [number, number, number, number] {
-        const [hit] = this.rc.intersectOrder(origin, dir);
+        const [hit] = this.rc.intersectOrder(origin, dir, "none");
                 
         if (!hit) {
             return;

@@ -1,3 +1,4 @@
+import Camera from "./Camera";
 import Light from "./Light";
 import Material from "./Material";
 import Mesh from "./Mesh";
@@ -10,6 +11,7 @@ export default class Scene extends Object3D {
     public readonly meshes: Mesh[] = [];
     public readonly boundingBox: [Vector3, Vector3] = [new Vector3, new Vector3];
     public readonly lights: Light[] = [];
+    public readonly cameras: Camera[] = [];
 
     faces = 0;
 

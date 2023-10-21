@@ -4,7 +4,7 @@ import AppConfig from "@/config";
 import PhotonMapper from "@/optimizer/PhotonMapper/PhotonMapper";
 
 export interface Renderer {
-    render(camera: Camera, scene: Scene): void;
+    render(scene: Scene): void;
 }
 
 export interface RendererConstructor {

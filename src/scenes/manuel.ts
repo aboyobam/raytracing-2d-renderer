@@ -19,5 +19,4 @@ setup(async ({ scene, camera }) => {
 
     camera.near = 0.1;
     camera.position.set(5.04, 5.6445, -8.4267);
-    // camera.lookAt(mesh.position);
 });

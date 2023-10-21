@@ -12,7 +12,7 @@ window.onmessage = ({ data }) => {
             height: data.height,
             cameraFov: data.cameraFov,
             cameraNear: 2,
-            autoClose: true,
+            autoClose: false,
             renderer: rendererConfigs[data.renderer as keyof typeof rendererConfigs],
             optimizer: {
                 maxDepth: 25
