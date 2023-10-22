@@ -7,11 +7,11 @@
     <title>Ray Tracer</title>
     <link rel="shortcut icon" href="favicon.png" type="image/x-icon" />
     <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
 
     <style>
         iframe {
-            max-width: 500px;
-            width: 100%;
+            height: max(500px, 70vh);
             border: 2px solid black;
         }
 
@@ -22,124 +22,135 @@
 </head>
 
 <body>
-    <main class="m-2">
-        <div class="row">
-            <div class="col-sm-12 col-md-6">
-                <form class="row">
-                    <div class="col-lg-4 col-md-6 col-sm-12 form-group">
-                        <label for="" class="form-label">File</label>
-                        <select name="file" id="" class="form-control form-control-sm">
-                            <option value="porsche" selected>Porsche</option>
-                            <option value="porsche-reflect">Porsche (Reflect)</option>
-                            <option value="cube">Cube</option>
-                            <option value="blender-scene">Blender Scene</option>
-                            <option value="donut">Donut</option>
-                            <option value="glass">Glass</option>
-                            <option value="mclarren">Koenigsegg</option>
-                            <option value="suzanne">Suzanne</option>
-                            <option value="manuel">Manuel</option>
-                            <option value="gltf">GLTF</option>
-                        </select>
-                    </div>
-
-                    <div class="col-lg-4 col-md-6 col-sm-12 form-group">
-                        <label for="" class="form-label">Width</label>
-                        <input type="number" class="form-control form-control-sm" name="width" id="" value="500" />
-                    </div>
-
-                    <div class="col-lg-4 col-md-6 col-sm-12 form-group">
-                        <label for="" class="form-label">Height</label>
-                        <input type="number" class="form-control form-control-sm" name="height" id="" value="500" />
-                    </div>
-
-                    <div class="col-lg-4 col-md-6 col-sm-12 form-group">
-                        <label for="threads" class="form-label">Threads</label>
-                        <select name="threads" id="threads" class="form-control form-control-sm"></select>
-                    </div>
-
-                    <div class="col-lg-4 col-md-6 col-sm-12 form-group">
-                        <label for="" class="form-label">Camera FOV</label>
-                        <input type="number" step="0.1" class="form-control form-control-sm" name="cameraFov" id="" value="45" />
-                    </div>
-
-                    <div class="col-lg-4 col-md-6 col-sm-12 form-group">
-                        <label for="" class="form-label">Renderer</label>
-                        <select name="renderer" id="" class="form-control form-control-sm">
-                            <option value="stub" selected>Stub</option>
-                            <option value="light">Light</option>
-                            <option value="lightReflect">Light (With Reflection)</option>
-                            <option value="all">Light + Reflect + Alpha</option>
-                        </select>
-                    </div>
-
-                    <div class="col-12 text-right">
-                        <button class="btn btn-sm btn-outline-warning" type="reset">
-                            Reset
-                        </button>
-                        <button class="btn btn-sm btn-outline-success" type="submit">
-                            Run
-                        </button>
-                    </div>
-                </form>
+    <nav class="navbar navbar-expand navbar-light bg-light" id="app">
+        <div class="container">
+            <a class="navbar-brand">RayTracing</a>
+            <div class="navbar-nav">
+                <div class="nav-item d-flex align-items-center">
+                    <button class="btn btn-success btn-sm" @click="run()">Run</button>
+                </div>
+                <div class="nav-item d-flex align-items-center form-group mb-0 ml-2">
+                    <select name="file" id="" class="form-control form-control-sm" v-model="file">
+                        <option value="porsche-reflect">Porsche (Reflect)</option>
+                        <option value="cube">Cube</option>
+                        <option value="blender-scene">Blender Scene</option>
+                        <option value="mclarren">Koenigsegg</option>
+                        <option value="manuel">Manuel</option>
+                        <option value="gltf">GLTF</option>
+                    </select>
+                </div>
+                <div class="nav-item d-flex align-items-center form-group mb-0 ml-2" v-if="file === 'gltf'">
+                    <input type="text" class="form-control form-control-sm" v-model="gltf">
+                </div>
+                <div class="nav-item d-flex align-items-center form-group mb-0 ml-2">
+                    <select name="renderer" id="" class="form-control form-control-sm" v-model="renderer">
+                        <option value="stub">Stub</option>
+                        <option value="light">Light</option>
+                        <option value="lightReflect">Light (With Reflection)</option>
+                        <option value="all">Light + Reflect + Alpha</option>
+                    </select>
+                </div>
+                <div class="nav-item d-flex align-items-center form-group mb-0 ml-2">
+                    <select name="threads" id="" class="form-control form-control-sm" v-model="threads">
+                        <option v-for="count in threadCounts" :value="count">{{ count }}</option>
+                    </select>
+                </div>
+                <div class="nav-item d-flex align-items-center ml-2">
+                    <button @click="showSizeModal = true" class="btn btn-outline-primary btn-sm">Size ({{ width }}x{{
+                        keepAspectRatio ? "Auto" : height }})</button>
+                </div>
             </div>
-            <div class="col-sm-12 col-md-6 d-flex justify-content-center" id="frame"></div>
+            <div class="modal" :class="{ 'd-block': showSizeModal }" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Size</h5>
+                            <button type="button" class="close" @click="showSizeModal = false">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form>
+                                <div class="form-group">
+                                    <label for="width">Width</label>
+                                    <input type="number" class="form-control" id="width" v-model="width">
+                                </div>
+                                <div class="form-group">
+                                    <label for="height">Height</label>
+                                    <input type="number" class="form-control" id="height" v-model="height"
+                                        :disabled="keepAspectRatio">
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="keepAspectRatio"
+                                        v-model="keepAspectRatio">
+                                    <label class="form-check-label" for="keepAspectRatio">Keep Aspect Ratio</label>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @click="showSizeModal = false">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+    </nav>
+    <main class="mt-3 d-flex justify-content-center">
 
-        <script defer>
-            // set threads
-            threads: {
-                const el = document.querySelector("#threads");
-                for (let i = 1; i <= navigator.hardwareConcurrency; i++) {
-                    const opt = document.createElement("option");
-                    opt.textContent = i;
-                    opt.value = i;
-                    el.appendChild(opt);
-                    if (i == Math.floor(navigator.hardwareConcurrency / 2)) {
-                        opt.selected = "selected";
-                    }
+    </main>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                threadCounts: Array.from({ length: navigator.hardwareConcurrency }, (_, i) => i + 1),
+                showSizeModal: false,
+                ...(localStorage.getItem("config") ? JSON.parse(localStorage.getItem("config")) : {
+                    width: 720,
+                    height: 480,
+                    keepAspectRatio: true,
+                    threads: 6,
+                    file: "porsche",
+                    renderer: "stub",
+                    gltf: "test.gltf"
+                })
+            },
+            methods: {
+                run() {
+                    const data = {
+                        type: "config",
+                        width: this.width,
+                        height: this.height,
+                        threads: this.threads,
+                        file: this.file,
+                        renderer: this.renderer,
+                        keepAspectRatio: this.keepAspectRatio,
+                        gltf: this.gltf
+                    };
+
+                    localStorage.setItem("config", JSON.stringify(data));
+
+                    const target = document.querySelector("main");
+                    const iframe = document.createElement("iframe");
+                    iframe.frameBorder = 0;
+                    iframe.src = "frame.html";
+                    iframe.style.aspectRatio = `${data.width} / ${data.height}`;
+                    target.innerHTML = "";
+                    target.appendChild(iframe);
+
+                    iframe.onload = () => {
+                        iframe.contentWindow.postMessage(data);
+                    };
+
+                    window.onmessage = ({ data }) => {
+                        if (data.type === "aspect") {
+                            iframe.style.aspectRatio = `${this.width} / ${Math.round(this.width / data.aspect)}`; 
+                        }
+                    };
                 }
             }
-
-            document.forms[0].addEventListener("submit", (event) => {
-                event.preventDefault();
-
-                const rawData = new FormData(event.target);
-                const data = {
-                    file: rawData.get("file"),
-                    renderer: rawData.get("renderer"),
-                    cameraFov: parseFloat(rawData.get("cameraFov")),
-                    width: parseInt(rawData.get("width")),
-                    height: parseInt(rawData.get("height")),
-                    threads: parseInt(rawData.get("threads")),
-                };
-                const target = document.querySelector("#frame");
-                const iframe = document.createElement("iframe");
-                iframe.frameBorder = 0;
-                iframe.src = "frame.html";
-                iframe.style.aspectRatio = `${data.width} / ${data.height}`;
-                target.innerHTML = "";
-                target.appendChild(iframe);
-
-                iframe.onload = () => {
-                    iframe.contentWindow.postMessage(data);
-                };
-
-                return false;
-            });
-        </script>
-    </main>
+        });
+    </script>
 </body>
 
 </html>
-
-<!--
-renderer: {
-    photonMapperSetup: {
-        samples: 200_000,
-        maxDepth: 5,
-        maxSize: 2000,
-        hasAlpha: false,
-        enabled: false
-    }
-}
--->

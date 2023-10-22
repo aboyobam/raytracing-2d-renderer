@@ -1,11 +1,11 @@
 export default interface AppConfig {
     file: string;
-    width: number;
-    height: number;
     threads: number;
     renderer: {
+        gltf: string;
         width: number;
         height: number;
+        keepAspectRatio: boolean;
         autoClose: boolean;
         cameraFov: number;
         cameraNear: number;

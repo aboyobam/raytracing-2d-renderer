@@ -14,7 +14,7 @@ class LightRenderer extends BaseRenderer {
         }
 
         //#region light
-        let lightStrength = 0;
+        const lightStrength = new Vector3();
         for (const light of this.scene.lights) {
             const lightDir = hit.point.sub(light.worldPosition).norm();
             const [lightHit, ...rest] = this.rc.intersectOrder(light.worldPosition, lightDir);
@@ -43,7 +43,10 @@ class LightRenderer extends BaseRenderer {
             }
             
             const angleStrength = lightDir.angleTo(hit.face.normal) / Math.PI;
-            lightStrength += angleStrength * light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
+            const strength = angleStrength * light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
+            lightStrength.x += strength * light.color[0];
+            lightStrength.y += strength * light.color[1];
+            lightStrength.z += strength * light.color[2];
         }
 
         const q = hit.angle / 180;
@@ -51,9 +54,9 @@ class LightRenderer extends BaseRenderer {
         const [br, bb, bg] = hit.face.material.getColorAt(hit.face, hit.point);
 
         return [
-            br * q * lightStrength,
-            bb * q * lightStrength,
-            bg * q * lightStrength,
+            br * q * lightStrength.x,
+            bb * q * lightStrength.y,
+            bg * q * lightStrength.z,
             255
         ];
     }

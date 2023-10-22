@@ -1,6 +1,7 @@
 import Camera from "@/Camera";
 import Face from "@/Face";
 import Geometry from "@/Geometry";
+import Light from "@/Light";
 import Material from "@/Material";
 import Mesh from "@/Mesh";
 import Scene from "@/Scene";
@@ -24,7 +25,18 @@ export default class GLTFParser {
             }
 
             if ("extensions" in gltfNode) {
+                
+                if (gltfNode.extensions.KHR_lights_punctual) {
+                    const gltfLight = gltf.extensions.KHR_lights_punctual.lights[gltfNode.extensions.KHR_lights_punctual.light];
 
+                    const { intensity, distance, decay } = gltfLight.extras || {};
+                    if (typeof intensity == "number" && typeof distance === "number" && typeof decay === "number") {
+                        const light = new Light(intensity, distance, decay);
+                        light.position.set(gltfNode.translation[0], gltfNode.translation[1], gltfNode.translation[2]);
+                        light.color = gltfLight.color;
+                        scene.addLight(light);
+                    }
+                }
                 continue;
             }
 
@@ -63,6 +75,8 @@ export default class GLTFParser {
     private static async parseMesh(gltf: any, node: any): Promise<Mesh> {
         const gltfMesh = gltf.meshes[node.mesh];
 
+        const [scaleX, scaleY, scaleZ] = node.scale || [1, 1, 1];
+
         gltf.buffers.forEach((gltfBuffer: any) => {
             const buffer = base64ToArrayBuffer(gltfBuffer.uri.split(",")[1]);
             gltfBuffer.buffer = buffer;
@@ -72,15 +86,17 @@ export default class GLTFParser {
 
         for (const primitive of gltfMesh.primitives) {
             const uvAccessor = gltf.accessors[primitive.attributes.TEXCOORD_0];
-            const uvView = gltf.bufferViews[uvAccessor.bufferView];
-            const uvBuffer = gltf.buffers[uvView.buffer].buffer;
-            const uvData = new DataView(uvBuffer, uvView.byteOffset, uvView.byteLength);
+            const uvView = uvAccessor && gltf.bufferViews[uvAccessor.bufferView];
+            const uvBuffer = uvAccessor && gltf.buffers[uvView.buffer].buffer;
+            const uvData = uvAccessor && new DataView(uvBuffer, uvView.byteOffset, uvView.byteLength);
 
             const uvs: Vector3[] = [];
-            for (let i = 0; i < uvAccessor.count; i++) {
-                const u = uvData.getFloat32(i * 8, true);
-                const v = uvData.getFloat32(i * 8 + 4, true);
-                uvs.push(new Vector3(u, v));
+            if (uvAccessor) {
+                for (let i = 0; i < uvAccessor.count; i++) {
+                    const u = uvData.getFloat32(i * 8, true);
+                    const v = uvData.getFloat32(i * 8 + 4, true);
+                    uvs.push(new Vector3(u, v));
+                }
             }
 
             let material: Material;
@@ -118,9 +134,9 @@ export default class GLTFParser {
             // Extract positions (vertices)
             const vertices: Vector3[] = [];
             for (let i = 0; i < positionsAccessor.count; i++) {
-                const x = positionData.getFloat32(i * 12, true);
-                const y = positionData.getFloat32(i * 12 + 4, true);
-                const z = positionData.getFloat32(i * 12 + 8, true);
+                const x = positionData.getFloat32(i * 12, true) * scaleX;
+                const y = positionData.getFloat32(i * 12 + 4, true) * scaleY;
+                const z = positionData.getFloat32(i * 12 + 8, true) * scaleZ;
                 vertices.push(new Vector3(x, y, z));
             }
 
@@ -150,7 +166,7 @@ export default class GLTFParser {
                 );
 
                 const face = new Face(vertex1, vertex2, vertex3, faceNormal, material);
-                if (material && material.texture) {
+                if (material && material.texture && uvAccessor) {
                     const uv1 = uvs[indices[i]];
                     const uv2 = uvs[indices[i + 1]];
                     const uv3 = uvs[indices[i + 2]];
@@ -162,8 +178,6 @@ export default class GLTFParser {
         }
 
         
-        // Here you should probably create and return a new Mesh with the parsed faces.
-        // For now, I'm returning null as before.
         const geo = new Geometry(faces);
         const material = Material.RED; // DUMMY
         const mesh = new Mesh(geo, material);

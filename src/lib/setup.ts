@@ -11,8 +11,9 @@ let _build: () => Promise<Scene>;
 let _data: {
     threads: number;
     config: AppConfig['renderer'];
-    buffer: SharedArrayBuffer;
 };
+
+let _render: (size: { width: number, height: number, buffer: SharedArrayBuffer }) => Promise<void>;
 
 self.onmessage = ({ data: { type, data } }) => {
     if (type == "config") {
@@ -22,12 +23,14 @@ self.onmessage = ({ data: { type, data } }) => {
         if (_build) {
             doSetup();
         }
+    } else if (type == "render") {
+        _render(data);
     }
 }
 
 interface SetupFunction {
     (buildScene: BuildScene): void;
-    forGLTF(path: string): void;
+    gltf(): void;
 }
 
 const setup: SetupFunction = function(buildScene: BuildScene) {
@@ -44,9 +47,9 @@ const setup: SetupFunction = function(buildScene: BuildScene) {
     }
 } as SetupFunction;
 
-setup.forGLTF = function(file: string) {
+setup.gltf = function() {
     _build = async () => {
-        const scene = await GLTFParser.parse(file);
+        const scene = await GLTFParser.parse(_data.config.gltf);
         return scene;
     }
 
@@ -64,65 +67,75 @@ async function doSetup() {
     const scene = await _build();
     scene.build();
 
-    let finished = 0;
+    self.postMessage({
+        type: "aspect",
+        aspect: scene.cameras[0].aspectRatio
+    });
 
-    const photons: Photon[] = [];
-    const RendererClass = rendererMap[_data.config.renderer.type];
-
-    if (RendererClass.usesPhotonMapper && _data.config.photonMapperSetup.enabled) {
-        await new Promise<void>(resolve => {
-            let gotPhotons = 0;
-
-            for (let offset = 0; offset < _data.threads; offset++) {
-                const photonThread = new Worker("/js/workers/photons.bundle.js");
-                photonThread.postMessage({
-                    scene,
-                    offset,
-                    skip: _data.threads,
-                    setup: _data.config.photonMapperSetup
-                });
+    _render = async ({ width, height, buffer }) => {
+        _data.config.width = width;
+        _data.config.height = height;
         
-                photonThread.onmessage = (event: MessageEvent<Photon[]>) => {
-                    gotPhotons++;
-                    photons.push(...event.data);
+        let finished = 0;
 
-                    if (gotPhotons == _data.threads) {
-                        return resolve();
+        const photons: Photon[] = [];
+        const RendererClass = rendererMap[_data.config.renderer.type];
+    
+        if (RendererClass.usesPhotonMapper && _data.config.photonMapperSetup.enabled) {
+            await new Promise<void>(resolve => {
+                let gotPhotons = 0;
+    
+                for (let offset = 0; offset < _data.threads; offset++) {
+                    const photonThread = new Worker("/js/workers/photons.bundle.js");
+                    photonThread.postMessage({
+                        scene,
+                        offset,
+                        skip: _data.threads,
+                        setup: _data.config.photonMapperSetup
+                    });
+            
+                    photonThread.onmessage = (event: MessageEvent<Photon[]>) => {
+                        gotPhotons++;
+                        photons.push(...event.data);
+    
+                        if (gotPhotons == _data.threads) {
+                            return resolve();
+                        }
                     }
                 }
-            }
-        });
-    }
-
-    for (let offset = 0; offset < _data.threads; offset++) {
-        const renderThread = new Worker("/js/workers/frame.bundle.js");
-        renderThread.postMessage({
-            scene,
-            photons,
-            _data: {
-                buffer: _data.buffer,
-                config: _data.config,
-                offset,
-                skip: _data.threads
-            }
-        });
-
-        renderThread.onmessage = (event) => {
-            if (event.data == "done") {
-                finished++;
-                if (finished == _data.threads) {
-                    const time = performance.now() - start;
-                    console.log("Rendering time:", time);
-                    self.postMessage({
-                        type: "time",
-                        faces: scene.faces,
-                        lights: scene.lights.length,
-                        renderer: _data.config.renderer.type,
-                        time
-                    });
-
-                    if (_data.config.autoClose) {
-                        self.close();
+            });
+        }
+    
+        for (let offset = 0; offset < _data.threads; offset++) {
+            const renderThread = new Worker("/js/workers/frame.bundle.js");
+            renderThread.postMessage({
+                scene,
+                photons,
+                _data: {
+                    buffer,
+                    config: _data.config,
+                    offset,
+                    skip: _data.threads
+                }
+            });
+    
+            renderThread.onmessage = (event) => {
+                if (event.data == "done") {
+                    finished++;
+                    if (finished == _data.threads) {
+                        const time = performance.now() - start;
+                        console.log("Rendering time:", time);
+                        self.postMessage({
+                            type: "time",
+                            faces: scene.faces,
+                            lights: scene.lights.length,
+                            renderer: _data.config.renderer.type,
+                            time
+                        });
+    
+                        if (_data.config.autoClose) {
+                            self.close();
+                        }
                     }
                 }
             }
@@ -133,6 +146,4 @@ async function doSetup() {
 interface SetupContext {
     scene: Scene;
     camera: Camera;
-    // renderer: Renderer;
-    // config: AppConfig['renderer'];
 }
