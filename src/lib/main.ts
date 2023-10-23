@@ -70,7 +70,7 @@ window.onmessage = ({ data }) => {
                 ctx.textAlign = "end";
                 ctx.textBaseline = "top";
                 ctx.fillStyle = "black";
-                ctx.font = (canvas.height / 30) + "px Arial";
+                ctx.font = (canvas.height / 40) + "px Arial";
                 ctx.fillText(hintTxt.join(", "), canvas.width - 10, 10);
                 requestAnimationFrame(draw);
             }

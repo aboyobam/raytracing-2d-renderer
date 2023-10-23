@@ -40,7 +40,9 @@
                     </select>
                 </div>
                 <div class="nav-item d-flex align-items-center form-group mb-0 ml-2" v-if="file === 'gltf'">
-                    <input type="text" class="form-control form-control-sm" v-model="gltf">
+                    <select name="gltfFile" id="" class="form-control form-control-sm" v-model="gltf">
+                        <option v-for="gltfFile in gltfFiles" :value="gltfFile">{{ gltfFile }}</option>
+                    </select>
                 </div>
                 <div class="nav-item d-flex align-items-center form-group mb-0 ml-2">
                     <select name="renderer" id="" class="form-control form-control-sm" v-model="renderer">
@@ -100,11 +102,12 @@
     </main>
 
     <script>
-        new Vue({
+        const vue = new Vue({
             el: '#app',
             data: {
                 threadCounts: Array.from({ length: navigator.hardwareConcurrency }, (_, i) => i + 1),
                 showSizeModal: false,
+                gltfFiles: [],
                 ...(localStorage.getItem("config") ? JSON.parse(localStorage.getItem("config")) : {
                     width: 720,
                     height: 480,
@@ -112,7 +115,7 @@
                     threads: 6,
                     file: "porsche",
                     renderer: "stub",
-                    gltf: "test.gltf"
+                    gltf: "test.gltf",
                 })
             },
             methods: {
@@ -149,6 +152,10 @@
                     };
                 }
             }
+        });
+
+        fetch("/api/gltf-files").then(res => res.json()).then(files => {
+            vue.gltfFiles = files;
         });
     </script>
 </body>

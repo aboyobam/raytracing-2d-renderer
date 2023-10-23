@@ -8,14 +8,14 @@ class AllRenderer extends BaseRenderer {
     declare protected readonly localConfig: AllRendererSetup;
     static readonly usesPhotonMapper = true;
 
-    protected calulatePixel(origin: Vector3, dir: Vector3, depth = 0): [number, number, number, number] {
-        const [hit] = this.rc.intersectOrder(origin, dir, "both");
+    protected calulatePixel(origin: Vector3, dir: Vector3, depth = 0, backface: "none" | "only" = "none"): [number, number, number, number] {
+        const [hit] = this.rc.intersectOrder(origin, dir, backface);
 
         if (!hit) {
             return;
         }
 
-        const entering = dir.dot(hit.face.normal) < 0; // Check if ray is entering or leaving the object
+        const entering = dir.dot(hit.face.normal) < 0;
         const lightStrength = entering ? this.calculateLight(hit) : 0;
         const q = hit.angle / 180 * lightStrength;
         const [br, bg, bb] = hit.face.material.getColorAt(hit.face, hit.point);
@@ -30,24 +30,22 @@ class AllRenderer extends BaseRenderer {
             let refractedDirection = null;
 
             if (newAlpha) {
-                // Calculate refracted direction
-                const n1 = entering ? 1.0 : hit.face.material.refractiveIndex; // if entering, n1 is air's refractive index
-                const n2 = entering ? hit.face.material.refractiveIndex : 1.0; // if exiting, n2 is air's refractive index
-                const normal = entering ? hit.face.normal : hit.face.normal.neg(); // Flip the normal if exiting
+                const n1 = entering ? 1.0 : hit.face.material.refractiveIndex;
+                const n2 = entering ? hit.face.material.refractiveIndex : 1.0;
+                const normal = entering ? hit.face.normal : hit.face.normal.neg();
                 const incidenceDir = dir.neg();
                 const cosineThetaI = incidenceDir.dot(normal);
-                const sin2ThetaI = Math.max(0.0, 1.0 - cosineThetaI * cosineThetaI);
+                const sin2ThetaI = Math.max(0, 1 - cosineThetaI * cosineThetaI);
                 const sin2ThetaT = (n1 / n2) * (n1 / n2) * sin2ThetaI;
     
-                // Check for total internal reflection
-                if (sin2ThetaT < 1.0) {
-                    const cosineThetaT = Math.sqrt(1.0 - sin2ThetaT);
+                if (sin2ThetaT < 1) {
+                    const cosineThetaT = Math.sqrt(1 - sin2ThetaT);
                     refractedDirection = incidenceDir.multScalar(n1 / n2).sub(normal.multScalar((n1 / n2) * cosineThetaI + cosineThetaT));
                 }
             }
     
             const specularTarget = newStrengh && this.calulatePixel(hit.point, hit.outDir, depth + 1);
-            const alphaTarget = refractedDirection && this.calulatePixel(hit.point, refractedDirection, depth + 1);
+            const alphaTarget = refractedDirection && this.calulatePixel(hit.point, refractedDirection, depth + 1, backface == "none" ? "only" : "none");
 
             const [nr, ng, nb] = specularTarget || Array(3).fill(240);
             const [ar, ag, ab] = alphaTarget || Array(3).fill(240);
@@ -108,10 +106,6 @@ class AllRenderer extends BaseRenderer {
             
             const angleStrength = lightDir.angleTo(hit.face.normal) / Math.PI;
             lightStrength += alpha * angleStrength * light.intensity / Math.pow(1 + (distance / light.distance), light.decay);
-        }
-
-        if (hit.face.material.name == "wine") {
-            return 4;
         }
 
         // indirect lumination

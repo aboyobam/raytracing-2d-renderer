@@ -51,6 +51,8 @@ const setup: SetupFunction = function(buildScene: BuildScene) {
 setup.gltf = function() {
     _build = async () => {
         const scene = await GLTFParser.parse(_data.config.gltf);
+        console.log(Material.all);
+        
         return scene;
     }
 

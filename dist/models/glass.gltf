@@ -4,9 +4,7 @@
 		"version":"2.0"
 	},
 	"extensionsUsed":[
-		"KHR_lights_punctual",
-		"KHR_materials_specular",
-		"KHR_materials_ior"
+		"KHR_lights_punctual"
 	],
 	"extensionsRequired":[
 		"KHR_lights_punctual"
@@ -278,18 +276,6 @@
 		{
 			"alphaMode":"BLEND",
 			"doubleSided":true,
-			"extensions":{
-				"KHR_materials_specular":{
-					"specularColorFactor":[
-						2.5152744547780324,
-						2.5152744547780324,
-						2.5152744547780324
-					]
-				},
-				"KHR_materials_ior":{
-					"ior":1.2000000476837158
-				}
-			},
 			"extras":{
 				"refractiveIndex":1.5
 			},
@@ -307,18 +293,6 @@
 		},
 		{
 			"doubleSided":true,
-			"extensions":{
-				"KHR_materials_specular":{
-					"specularColorFactor":[
-						0,
-						0,
-						0
-					]
-				},
-				"KHR_materials_ior":{
-					"ior":1.4500000476837158
-				}
-			},
 			"name":"wine",
 			"pbrMetallicRoughness":{
 				"baseColorFactor":[
@@ -338,8 +312,8 @@
 				"baseColorTexture":{
 					"index":0
 				},
-				"metallicFactor":0,
-				"roughnessFactor":0.5
+				"metallicFactor":0.12999999523162842,
+				"roughnessFactor":0.22440946102142334
 			}
 		}
 	],
