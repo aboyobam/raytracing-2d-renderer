@@ -25,7 +25,6 @@ export default class GLTFParser {
             }
 
             if ("extensions" in gltfNode) {
-                
                 if (gltfNode.extensions.KHR_lights_punctual) {
                     const gltfLight = gltf.extensions.KHR_lights_punctual.lights[gltfNode.extensions.KHR_lights_punctual.light];
 
@@ -176,7 +175,6 @@ export default class GLTFParser {
                 faces.push(face);
             }
         }
-
         
         const geo = new Geometry(faces);
         const material = Material.RED; // DUMMY
@@ -201,10 +199,18 @@ export default class GLTFParser {
     }
 
     private static async parseMaterial(gltf: any, gltfMaterial: any): Promise<Material> {
+        if (gltfMaterial.name in Material.all) {
+            return Material.all[gltfMaterial.name];
+        }
+
         let baseColor = [1.0, 1.0, 1.0, 1.0]; // Default to white
         let metallic = 1.0;
         let roughness = 1.0;
-        const mat = new Material();
+        const mat = new Material(0, 0, 0, gltfMaterial.name, 1);
+
+        if (gltfMaterial.extras?.refractiveIndex) {
+            mat.refractiveIndex = gltfMaterial.extras.refractiveIndex;
+        }
     
         if (gltfMaterial.pbrMetallicRoughness) {
             if (gltfMaterial.pbrMetallicRoughness.baseColorFactor) {

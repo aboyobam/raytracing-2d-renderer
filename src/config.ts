@@ -13,7 +13,7 @@ const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'],
     },
     all: {
         type: "all",
-        maxReflectionDepth: 5,
+        maxReflectionDepth: 10,
         indirectIllumination: false,
         indirectIlluminationDelta: 0.2,
         indirectIlluminationDivider: 3

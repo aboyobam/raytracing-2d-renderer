@@ -5,6 +5,7 @@ import OctreeOptimizer from "./optimizer/Octree/Octree";
 import Photon from "./optimizer/PhotonMapper/Photon";
 import rendererMap from "./renderer/rendererMap";
 import GLTFParser from "./parsers/GLTFParser";
+import Material from "./Material";
 
 type BuildScene = (context: SetupContext) => void | Promise<void>;
 let _build: () => Promise<Scene>;
