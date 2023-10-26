@@ -7,6 +7,10 @@ export default class Face {
     private static counter = 0;
     private boundingBox: [Vector3, Vector3];
     readonly name: string;
+    uN: Vector3;
+    vN: Vector3;
+    wN: Vector3;
+
 
     uvMap: Readonly<[Vector3, Vector3, Vector3]>;
 
@@ -33,6 +37,9 @@ export default class Face {
 
         clone.uvMap = this.uvMap;
         clone.boundingBox = this.boundingBox;
+        clone.uN = this.uN.clone();
+        clone.vN = this.vN.clone();
+        clone.wN = this.wN.clone();
         return clone;
     }
 

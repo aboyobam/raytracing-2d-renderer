@@ -165,6 +165,10 @@ export default class GLTFParser {
                 );
 
                 const face = new Face(vertex1, vertex2, vertex3, faceNormal, material);
+                face.uN = normal1;
+                face.vN = normal2;
+                face.wN = normal3;
+
                 if (material && material.texture && uvAccessor) {
                     const uv1 = uvs[indices[i]];
                     const uv2 = uvs[indices[i + 1]];

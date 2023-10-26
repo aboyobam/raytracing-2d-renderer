@@ -53,6 +53,9 @@ export default class Mesh extends Object3D {
             Mesh.applyRotation(axis, angle, face.v);
             Mesh.applyRotation(axis, angle, face.w);
             Mesh.applyRotation(axis, angle, face.normal);
+            Mesh.applyRotation(axis, angle, face.uN);
+            Mesh.applyRotation(axis, angle, face.vN);
+            Mesh.applyRotation(axis, angle, face.wN);
         });
     }
 

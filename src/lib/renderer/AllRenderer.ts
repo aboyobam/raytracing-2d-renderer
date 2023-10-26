@@ -15,7 +15,7 @@ class AllRenderer extends BaseRenderer {
             return;
         }
 
-        const entering = dir.dot(hit.face.normal) < 0;
+        const entering = dir.dot(hit.normal) < 0;
         const lightStrength = entering ? this.calculateLight(hit) : 0;
         const q = hit.angle / 180 * lightStrength;
         const [br, bg, bb] = hit.face.material.getColorAt(hit.face, hit.point);
@@ -32,7 +32,7 @@ class AllRenderer extends BaseRenderer {
             if (newAlpha) {
                 const n1 = entering ? 1.0 : hit.face.material.refractiveIndex;
                 const n2 = entering ? hit.face.material.refractiveIndex : 1.0;
-                const normal = entering ? hit.face.normal : hit.face.normal.neg();
+                const normal = entering ? hit.normal : hit.normal.neg();
                 const incidenceDir = dir.neg();
                 const cosineThetaI = incidenceDir.dot(normal);
                 const sin2ThetaI = Math.max(0, 1 - cosineThetaI * cosineThetaI);
@@ -43,8 +43,8 @@ class AllRenderer extends BaseRenderer {
                     refractedDirection = incidenceDir.multScalar(n1 / n2).sub(normal.multScalar((n1 / n2) * cosineThetaI + cosineThetaT));
                 }
             }
-    
-            const specularTarget = newStrengh && this.calulatePixel(hit.point, hit.outDir, depth + 1);
+
+            const specularTarget = entering && newStrengh && this.calulatePixel(hit.point, hit.outDir, depth + 1);
             const alphaTarget = refractedDirection && this.calulatePixel(hit.point, refractedDirection, depth + 1, backface == "none" ? "only" : "none");
 
             const [nr, ng, nb] = specularTarget || Array(3).fill(240);
@@ -104,7 +104,7 @@ class AllRenderer extends BaseRenderer {
                 }
             }
             
-            const angleStrength = lightDir.angleTo(hit.face.normal) / Math.PI;
+            const angleStrength = lightDir.angleTo(hit.normal) / Math.PI;
             lightStrength += alpha * angleStrength * light.intensity / Math.pow(1 + (distance / light.distance), light.decay);
         }
 

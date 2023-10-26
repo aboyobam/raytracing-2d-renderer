@@ -80,14 +80,26 @@ export default class Raytracer {
         const t = f * edge2.dot(q);
         if (t > Raytracer.EPSILON) {
             const point = origin.add(normDir.multScalar(t));
-            const dotProduct = normDir.dot(face.normal);
+            const gamma = 1 - u - v;
+            const normal = (!face.uN || !face.vN || !face.wN) ? face.normal :
+                face.uN.multScalar(gamma).add(face.vN.multScalar(u)).add(face.wN.multScalar(v)).norm();
+
+            const dotProduct = normDir.dot(normal);
             const clampedDotProduct = Math.max(-1, Math.min(1, dotProduct));
             const angle = Math.acos(clampedDotProduct) * (180 / Math.PI);
             const distance = origin.sub(point).len();
-            const reflectionAdjustment = face.normal.multScalar(2 * dotProduct);
-            let outDir = normDir.sub(reflectionAdjustment).norm();
+            const reflectionAdjustment = normal.multScalar(2 * dotProduct);
+            const outDir = normDir.sub(reflectionAdjustment).norm();
 
-            return { angle, point, distance, face, outDir };
+            // face.material.name === "glass" && Math.random() < 0.00005 && console.log(
+            //     face.uN.pretty() + "\n" +
+            //     face.vN.pretty() + "\n" +
+            //     face.wN.pretty() + "\n" +
+            //     // face.uN.multScalar(gamma).add(face.vN.multScalar(u)).add(face.wN.multScalar(v)).norm().pretty() + "\n" + 
+            //     face.normal.pretty()
+            // );
+    
+            return { angle, point, distance, face, outDir, normal };
         }
     }
 }
@@ -98,4 +110,5 @@ export interface Intersection {
     distance: number;
     face: Face;
     outDir: Vector3;
+    normal: Vector3;
 }
