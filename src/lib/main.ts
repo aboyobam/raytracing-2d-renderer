@@ -13,20 +13,21 @@ window.onmessage = ({ data }) => {
             gltf: data.gltf,
             width: data.width,
             height: data.height,
+            shadeSmoothing: data.shadeSmooth,
             keepAspectRatio: data.keepAspectRatio,
             cameraFov: 45,
             cameraNear: 2,
-            autoClose: false,
+            autoClose: data.autoClose,
             renderer: rendererConfigs[data.renderer as keyof typeof rendererConfigs],
             optimizer: {
                 maxDepth: 25
             },
             photonMapperSetup: {
-                samples: 200_000,
+                samples: 15_000_000,
                 maxDepth: 5,
                 maxSize: 2000,
                 hasAlpha: false,
-                enabled: false
+                enabled: data.indirectLight
             }
         }
     }

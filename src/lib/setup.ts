@@ -6,6 +6,7 @@ import Photon from "./optimizer/PhotonMapper/Photon";
 import rendererMap from "./renderer/rendererMap";
 import GLTFParser from "./parsers/GLTFParser";
 import Material from "./Material";
+import rendererConfig from "./rendererConfig";
 
 type BuildScene = (context: SetupContext) => void | Promise<void>;
 let _build: () => Promise<Scene>;
@@ -19,6 +20,7 @@ let _render: (size: { width: number, height: number, buffer: SharedArrayBuffer }
 self.onmessage = ({ data: { type, data } }) => {
     if (type == "config") {
         _data = data;
+        Object.assign(rendererConfig, _data.config);
         OctreeOptimizer.MAX_DEPTH = _data.config.optimizer.maxDepth;
         
         if (_build) {
@@ -106,7 +108,8 @@ async function doSetup() {
                 }
             });
         }
-    
+
+
         for (let offset = 0; offset < _data.threads; offset++) {
             const renderThread = new Worker("/js/workers/frame.bundle.js");
             renderThread.postMessage({

@@ -90,14 +90,6 @@ export default class Raytracer {
             const distance = origin.sub(point).len();
             const reflectionAdjustment = normal.multScalar(2 * dotProduct);
             const outDir = normDir.sub(reflectionAdjustment).norm();
-
-            // face.material.name === "glass" && Math.random() < 0.00005 && console.log(
-            //     face.uN.pretty() + "\n" +
-            //     face.vN.pretty() + "\n" +
-            //     face.wN.pretty() + "\n" +
-            //     // face.uN.multScalar(gamma).add(face.vN.multScalar(u)).add(face.wN.multScalar(v)).norm().pretty() + "\n" + 
-            //     face.normal.pretty()
-            // );
     
             return { angle, point, distance, face, outDir, normal };
         }

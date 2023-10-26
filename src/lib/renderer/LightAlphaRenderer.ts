@@ -6,7 +6,7 @@ import Material from "@/Material";
 import BaseRenderer from "./BaseRenderer";
 
 class LightAlphaRenderer extends BaseRenderer {
-    protected calulatePixel(origin: Vector3, dir: Vector3): [number, number, number, number] {
+    protected calulatePixel(origin: Vector3, dir: Vector3): ColorLike {
         const hits = this.rc.intersectOrder(origin, dir);
                 
         if (!hits.length) {
@@ -65,7 +65,7 @@ class LightAlphaRenderer extends BaseRenderer {
             return acc;
         }, new Material(0, 0, 0, null, 5));
 
-        return [r, g, b, alpha];
+        return [r, g, b];
     }
 }
 

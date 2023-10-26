@@ -1,0 +1,1 @@
+type ColorLike = [number, number, number];

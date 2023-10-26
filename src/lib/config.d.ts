@@ -5,6 +5,7 @@ export default interface AppConfig {
         gltf: string;
         width: number;
         height: number;
+        shadeSmoothing: boolean;
         keepAspectRatio: boolean;
         autoClose: boolean;
         cameraFov: number;

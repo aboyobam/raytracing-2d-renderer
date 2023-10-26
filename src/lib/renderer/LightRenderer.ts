@@ -6,7 +6,7 @@ import BaseRenderer from "./BaseRenderer";
 class LightRenderer extends BaseRenderer {
     declare protected readonly localConfig: LightRendererSetup;
 
-    protected calulatePixel(origin: Vector3, dir: Vector3): [number, number, number, number] {
+    protected calulatePixel(origin: Vector3, dir: Vector3): ColorLike {
         const [hit] = this.rc.intersectOrder(origin, dir);
                 
         if (!hit) {
@@ -56,8 +56,7 @@ class LightRenderer extends BaseRenderer {
         return [
             br * q * lightStrength.x,
             bb * q * lightStrength.y,
-            bg * q * lightStrength.z,
-            255
+            bg * q * lightStrength.z
         ];
     }
 }

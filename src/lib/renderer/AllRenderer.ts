@@ -8,7 +8,7 @@ class AllRenderer extends BaseRenderer {
     declare protected readonly localConfig: AllRendererSetup;
     static readonly usesPhotonMapper = true;
 
-    protected calulatePixel(origin: Vector3, dir: Vector3, depth = 0, backface: "none" | "only" = "none"): [number, number, number, number] {
+    protected calulatePixel(origin: Vector3, dir: Vector3, depth = 0, backface: "none" | "only" = "none"): ColorLike {
         const [hit] = this.rc.intersectOrder(origin, dir, backface);
 
         if (!hit) {
@@ -16,10 +16,10 @@ class AllRenderer extends BaseRenderer {
         }
 
         const entering = dir.dot(hit.normal) < 0;
-        const lightStrength = entering ? this.calculateLight(hit) : 0;
-        const q = hit.angle / 180 * lightStrength;
+        const lightStrength: ColorLike = entering ? this.calculateLight(hit) : [0, 0, 0];
+        const [qr, qg, qb] = lightStrength.map(v => v * hit.angle / 180);
         const [br, bg, bb] = hit.face.material.getColorAt(hit.face, hit.point);
-        const baseColor = [br * q, bg * q, bb * q, 255] as [number, number, number, number];
+        const baseColor: ColorLike = [br * qr, bg * qg, bb * qb];
 
         if (depth < this.localConfig.maxReflectionDepth) {
             const newStrengh = hit.face.material.specular;
@@ -53,16 +53,15 @@ class AllRenderer extends BaseRenderer {
             return [
                 (baseColor[0] * oldStrength * oldAlpha) + (nr * newStrengh) + (ar * newAlpha),
                 (baseColor[1] * oldStrength * oldAlpha) + (ng * newStrengh) + (ag * newAlpha),  
-                (baseColor[2] * oldStrength * oldAlpha) + (nb * newStrengh) + (ab * newAlpha),
-                255
+                (baseColor[2] * oldStrength * oldAlpha) + (nb * newStrengh) + (ab * newAlpha)
             ];
         }
 
         return baseColor;
     }
 
-    private calculateLight(hit: Intersection): number {
-        let lightStrength = 0;
+    private calculateLight(hit: Intersection): ColorLike {
+        const lightStrength: ColorLike = [0, 0, 0];
 
         // direct lumination
         light_loop: for (const light of this.scene.lights) {
@@ -105,7 +104,10 @@ class AllRenderer extends BaseRenderer {
             }
             
             const angleStrength = lightDir.angleTo(hit.normal) / Math.PI;
-            lightStrength += alpha * angleStrength * light.intensity / Math.pow(1 + (distance / light.distance), light.decay);
+            const strength = alpha * angleStrength * light.intensity / Math.pow(1 + (distance / light.distance), light.decay);
+            lightStrength[0] += strength * light.color[0];
+            lightStrength[1] += strength * light.color[1];
+            lightStrength[2] += strength * light.color[2];
         }
 
         // indirect lumination
@@ -119,7 +121,7 @@ class AllRenderer extends BaseRenderer {
                     return p.intensity * angleStrength * lengthStrength;
                 });
                 const indirect = indirects.reduce((acc, s) => acc + s, 0) / this.localConfig.indirectIlluminationDivider;
-                lightStrength += indirect;
+                // lightStrength += indirect;
             }
         }
 

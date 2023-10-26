@@ -6,6 +6,7 @@ import Material from "@/Material";
 import Mesh from "@/Mesh";
 import Scene from "@/Scene";
 import Vector3 from "@/Vector3";
+import rendererConfig from "@/rendererConfig";
 
 export default class GLTFParser {
     static async parse(file: string) {
@@ -165,9 +166,11 @@ export default class GLTFParser {
                 );
 
                 const face = new Face(vertex1, vertex2, vertex3, faceNormal, material);
-                face.uN = normal1;
-                face.vN = normal2;
-                face.wN = normal3;
+                if (rendererConfig.shadeSmoothing) {
+                    face.uN = normal1;
+                    face.vN = normal2;
+                    face.wN = normal3;
+                }
 
                 if (material && material.texture && uvAccessor) {
                     const uv1 = uvs[indices[i]];

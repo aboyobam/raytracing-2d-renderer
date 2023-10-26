@@ -8,7 +8,7 @@ import { StubRendererSetup } from "@/config";
 class StubRenderer extends BaseRenderer {
     declare protected readonly localConfig: StubRendererSetup;
 
-    protected calulatePixel(origin: Vector3, dir: Vector3): [number, number, number, number] {
+    protected calulatePixel(origin: Vector3, dir: Vector3): ColorLike {
         const [hit] = this.rc.intersectOrder(origin, dir, "none");
                 
         if (!hit) {
@@ -21,8 +21,7 @@ class StubRenderer extends BaseRenderer {
         return [
             br * q * this.localConfig.colorMultiplier,
             bb * q * this.localConfig.colorMultiplier,
-            bg * q * this.localConfig.colorMultiplier,
-            255
+            bg * q * this.localConfig.colorMultiplier
         ];
     }
 }

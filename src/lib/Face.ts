@@ -37,15 +37,11 @@ export default class Face {
 
         clone.uvMap = this.uvMap;
         clone.boundingBox = this.boundingBox;
-        clone.uN = this.uN.clone();
-        clone.vN = this.vN.clone();
-        clone.wN = this.wN.clone();
+        clone.uN = this.uN?.clone();
+        clone.vN = this.vN?.clone();
+        clone.wN = this.wN?.clone();
         return clone;
     }
-
-    // isFromOutside(dir: Vector3) {
-    //     return dir.dot(this.normal) < 0;
-    // }
 
     getBoundingBox(): [Vector3, Vector3] {
         if (this.boundingBox) {

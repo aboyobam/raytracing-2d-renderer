@@ -5,7 +5,7 @@ import Material from "@/Material";
 import BaseRenderer from "./BaseRenderer";
 
 class AlphaRenderer extends BaseRenderer {
-    protected calulatePixel(origin: Vector3, dir: Vector3): [number, number, number, number] {
+    protected calulatePixel(origin: Vector3, dir: Vector3): ColorLike {
         const hits = this.rc.intersectOrder(origin, dir);
                 
         if (!hits.length) {
@@ -34,7 +34,7 @@ class AlphaRenderer extends BaseRenderer {
             return acc;
         }, new Material(0, 0, 0, null, 0));
 
-        return [r, g, b, alpha];
+        return [r, g, b];
     }
 }
 

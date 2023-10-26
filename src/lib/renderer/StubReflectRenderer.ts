@@ -8,7 +8,7 @@ import { StubReflectRendererSetup } from "@/config";
 class StubReflectRenderer extends BaseRenderer {
     declare protected readonly localConfig: StubReflectRendererSetup;
 
-    protected calulatePixel(origin: Vector3, dir: Vector3, depth = 0): [number, number, number, number] {
+    protected calulatePixel(origin: Vector3, dir: Vector3, depth = 0): ColorLike {
         const [hit] = this.rc.intersectOrder(origin, dir);
 
         if (!hit) {
@@ -17,7 +17,7 @@ class StubReflectRenderer extends BaseRenderer {
 
         const q = hit.angle / 180;
         const [br, bg, bb] = hit.face.material.getColorAt(hit.face, hit.point);
-        const baseColor = [br * q, bg * q, bb * q, 255] as [number, number, number, number];
+        const baseColor: ColorLike = [br * q, bg * q, bb * q];
 
         if (depth < this.localConfig.maxDepth) {
             if (hit.face.material.specular) {
@@ -37,8 +37,7 @@ class StubReflectRenderer extends BaseRenderer {
                 return [
                     baseColor[0] * oldStrength + nr * newStrengh,
                     baseColor[1] * oldStrength + ng * newStrengh,  
-                    baseColor[2] * oldStrength + nb * newStrengh,
-                    255
+                    baseColor[2] * oldStrength + nb * newStrengh
                 ];
             }
         }

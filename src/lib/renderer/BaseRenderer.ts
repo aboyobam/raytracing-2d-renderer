@@ -80,16 +80,16 @@ export default abstract class BaseRenderer implements Renderer {
         }
     }
 
-    protected abstract calulatePixel(origin: Vector3, dir: Vector3): [number, number, number, number];
+    protected abstract calulatePixel(origin: Vector3, dir: Vector3): ColorLike;
     protected beforeRender?(): void;
 
-    protected setPixel(x: number, y: number, r: number, g: number, b: number, a = 255) {
+    protected setPixel(x: number, y: number, r: number, g: number, b: number) {
         const index = (y * rendererConfig.width + x) * 4;
         const pixels = this.pixels;
 
         pixels[index + 0] = r;
         pixels[index + 1] = g;
         pixels[index + 2] = b;
-        pixels[index + 3] = a;
+        pixels[index + 3] = 255;
     }
 }

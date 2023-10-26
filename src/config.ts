@@ -7,9 +7,9 @@ const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'],
         type: "lightReflect",
         maxReflectionDepth: 3,
         lightInpercisionEpsilon: 1e-12,
-        indirectIllumination: false,
-        indirectIlluminationDelta: 0.2,
-        indirectIlluminationDivider: 2
+        indirectIllumination: true,
+        indirectIlluminationDelta: 0.07,
+        indirectIlluminationDivider: 10
     },
     all: {
         type: "all",
@@ -25,7 +25,7 @@ const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'],
     },
     stubReflect: {
         type: "stubReflect",
-        maxDepth: 3
+        maxDepth: 10
     },
     light: {
         type: "light",

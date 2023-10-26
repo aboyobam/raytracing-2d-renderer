@@ -8,7 +8,7 @@ class LightReflectRenderer extends BaseRenderer {
     declare protected readonly localConfig: LightReflectRendererSetup;
     static readonly usesPhotonMapper = true;
 
-    protected calulatePixel(origin: Vector3, dir: Vector3, depth = 0): [number, number, number, number] {
+    protected calulatePixel(origin: Vector3, dir: Vector3, depth = 0): ColorLike {
         const [hit] = this.rc.intersectOrder(origin, dir);
 
         if (!hit) {
@@ -19,7 +19,7 @@ class LightReflectRenderer extends BaseRenderer {
 
         const q = hit.angle / 180 * lightStrength;
         const [br, bg, bb] = hit.face.material.getColorAt(hit.face, hit.point);
-        const baseColor = [br * q, bg * q, bb * q, 255] as [number, number, number, number];
+        const baseColor: ColorLike = [br * q, bg * q, bb * q];
 
         if (depth < this.localConfig.maxReflectionDepth) {
             if (hit.face.material.specular) {
@@ -38,8 +38,7 @@ class LightReflectRenderer extends BaseRenderer {
                 return [
                     baseColor[0] * oldStrength + nr * newStrengh,
                     baseColor[1] * oldStrength + ng * newStrengh,  
-                    baseColor[2] * oldStrength + nb * newStrengh,
-                    255
+                    baseColor[2] * oldStrength + nb * newStrengh                    
                 ];
             }
         }
@@ -95,8 +94,8 @@ class LightReflectRenderer extends BaseRenderer {
                 });
                 const indirect = indirects.reduce((acc, s) => acc + s, 0) / this.localConfig.indirectIlluminationDivider;
                 lightStrength += indirect;
+                
             }
-
         }
 
         return lightStrength;
