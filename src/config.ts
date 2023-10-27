@@ -8,15 +8,13 @@ const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'],
         maxReflectionDepth: 3,
         lightInpercisionEpsilon: 1e-12,
         indirectIllumination: true,
-        indirectIlluminationDelta: 0.07,
-        indirectIlluminationDivider: 10
+        indirectIlluminationDelta: 0.2,
     },
     all: {
         type: "all",
         maxReflectionDepth: 10,
         indirectIllumination: false,
         indirectIlluminationDelta: 0.2,
-        indirectIlluminationDivider: 3
     },
     stub: {
         type: "stub",

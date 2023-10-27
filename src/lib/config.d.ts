@@ -21,9 +21,10 @@ export default interface AppConfig {
         photonMapperSetup: {
             maxDepth: number;
             maxSize: number;
-            samples: number;
             hasAlpha: boolean;
             enabled: boolean;
+            gridGap: number;
+            strengthDivider: number;
         }
     };
 }
@@ -63,7 +64,6 @@ export interface LightReflectRendererSetup {
     lightInpercisionEpsilon: number;
     indirectIllumination: boolean;
     indirectIlluminationDelta: number;
-    indirectIlluminationDivider: number;
 }
 
 export interface AllRendererSetup {
@@ -71,5 +71,4 @@ export interface AllRendererSetup {
     maxReflectionDepth: number;
     indirectIllumination: boolean;
     indirectIlluminationDelta: number;
-    indirectIlluminationDivider: number;
 }

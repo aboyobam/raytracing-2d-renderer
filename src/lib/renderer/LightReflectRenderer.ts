@@ -17,9 +17,9 @@ class LightReflectRenderer extends BaseRenderer {
 
         const lightStrength = this.calculateLight(hit);
 
-        const q = hit.angle / 180 * lightStrength;
+        const [qr, qg, qb] = lightStrength.map(l => l * hit.angle / 180);
         const [br, bg, bb] = hit.face.material.getColorAt(hit.face, hit.point);
-        const baseColor: ColorLike = [br * q, bg * q, bb * q];
+        const baseColor: ColorLike = [br * qr, bg * qb, bb * qg];
 
         if (depth < this.localConfig.maxReflectionDepth) {
             if (hit.face.material.specular) {
@@ -46,8 +46,8 @@ class LightReflectRenderer extends BaseRenderer {
         return baseColor;
     }
 
-    private calculateLight(hit: Intersection): number {
-        let lightStrength = 0;
+    private calculateLight(hit: Intersection): ColorLike {
+        const lightStrength: ColorLike = [0, 0, 0];
 
         // direct lumination
         for (const light of this.scene.lights) {
@@ -78,23 +78,31 @@ class LightReflectRenderer extends BaseRenderer {
             }
             
             const angleStrength = lightDir.angleTo(hit.face.normal) / Math.PI;
-            lightStrength += angleStrength * light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
+            const strength = angleStrength * light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
+            lightStrength[0] += strength * light.color[0];
+            lightStrength[1] += strength * light.color[1];
+            lightStrength[2] += strength * light.color[2];
         }
         
 
-        // indirect lumination
         if (this.localConfig.indirectIllumination) {
             const delta = this.localConfig.indirectIlluminationDelta;
             const photons = Array.from(LightReflectRenderer.photonMapper.get(hit.point, delta));
             if (photons.length) {
                 const indirects = photons.map((p) => {
-                    const angleStrength = p.position.angleTo(hit.face.normal.neg()) / Math.PI;
                     const lengthStrength = delta / (delta + hit.point.sub(p.position).len());
-                    return p.intensity * angleStrength * lengthStrength;
+                    return p.color.map(c => c * lengthStrength) as ColorLike;
                 });
-                const indirect = indirects.reduce((acc, s) => acc + s, 0) / this.localConfig.indirectIlluminationDivider;
-                lightStrength += indirect;
+                const indirect = indirects.reduce((acc, s) => {
+                    acc[0] += s[0];
+                    acc[1] += s[1];
+                    acc[2] += s[2];
+                    return acc;
+                }, [0, 0, 0] satisfies ColorLike);
                 
+                lightStrength[0] += indirect[0];
+                lightStrength[1] += indirect[1];
+                lightStrength[2] += indirect[2];
             }
         }
 

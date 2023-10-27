@@ -116,12 +116,19 @@ class AllRenderer extends BaseRenderer {
             const photons = Array.from(AllRenderer.photonMapper.get(hit.point, delta));
             if (photons.length) {
                 const indirects = photons.map((p) => {
-                    const angleStrength = 1; // p.position.angleTo(hit.face.normal.neg()) / Math.PI;
                     const lengthStrength = delta / (delta + hit.point.sub(p.position).len());
-                    return p.intensity * angleStrength * lengthStrength;
+                    return p.color.map(c => c * lengthStrength) as ColorLike;
                 });
-                const indirect = indirects.reduce((acc, s) => acc + s, 0) / this.localConfig.indirectIlluminationDivider;
-                // lightStrength += indirect;
+                const indirect = indirects.reduce((acc, s) => {
+                    acc[0] += s[0];
+                    acc[1] += s[1];
+                    acc[2] += s[2];
+                    return acc;
+                }, [0, 0, 0] satisfies ColorLike);
+                
+                lightStrength[0] += indirect[0];
+                lightStrength[1] += indirect[1];
+                lightStrength[2] += indirect[2];
             }
         }
 

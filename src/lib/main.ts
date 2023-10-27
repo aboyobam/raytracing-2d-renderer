@@ -23,10 +23,11 @@ window.onmessage = ({ data }) => {
                 maxDepth: 25
             },
             photonMapperSetup: {
-                samples: 15_000_000,
                 maxDepth: 5,
                 maxSize: 2000,
-                hasAlpha: false,
+                hasAlpha: true,
+                gridGap: 0.03,
+                strengthDivider: 15,
                 enabled: data.indirectLight
             }
         }
