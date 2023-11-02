@@ -5,7 +5,7 @@ import type AppConfig from "@/config";
 const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'], AppConfig['renderer']['renderer']>> = {
     lightReflect: {
         type: "lightReflect",
-        maxReflectionDepth: 3,
+        maxReflectionDepth: 10,
         lightInpercisionEpsilon: 1e-12,
     },
     all: {

@@ -84,12 +84,7 @@ export default class Vector3 {
     }
 
     angleTo(v: Vector3) {
-        const dotProduct = this.dot(v);
-        const magnitudeA = this.len();
-        const magnitudeB = v.len();
-        
-        const value = Math.max(-1, Math.min(1, dotProduct / (magnitudeA * magnitudeB)));
-        return Math.acos(value);
+        return this.dot(v) / (this.len() * v.len());
     }
     
     cross(v: Vector3) {

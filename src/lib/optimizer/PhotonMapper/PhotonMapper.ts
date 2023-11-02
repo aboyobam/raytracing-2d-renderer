@@ -49,7 +49,7 @@ export default class PhotonMapper {
                             continue;
                         }
 
-                        const angleStrength = dir.angleTo(hit.face.normal) / Math.PI;
+                        const angleStrength = Math.max(dir.angleTo(hit.normal.neg()), 0);
                         for (const photon of this.trackLight(light, hit.point, hit.outDir, angleStrength * face.material.specular * face.material.alpha, hit.distance)) {
                             this.tree.add(photon);
                         }
@@ -65,7 +65,7 @@ export default class PhotonMapper {
             return;
         }
 
-        const angleStrength = dir.angleTo(hit.face.normal) / Math.PI;
+        const angleStrength = Math.max(dir.angleTo(hit.normal.neg()), 0);
         const intensity = angleStrength * strength * light.intensity / Math.pow(1 + ((distance + hit.distance) / light.distance), light.decay);
         yield new Photon(hit.point, [
             light.color[0] * intensity / this.config.strengthDivider,

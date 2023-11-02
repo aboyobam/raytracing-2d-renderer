@@ -9,7 +9,7 @@ class AllRenderer extends BaseRenderer {
     declare protected readonly localConfig: AllRendererSetup;
     static readonly usesPhotonMapper = true;
 
-    protected calulatePixel(origin: Vector3, dir: Vector3, depth = 0, backface: "none" | "only" = "none"): ColorLike {
+    protected calulatePixel(origin: Vector3, dir: Vector3, depth = 0, backface: "none" | "only" | "both" = "none"): ColorLike {
         const [hit] = this.rc.intersectOrder(origin, dir, backface);
 
         if (!hit) {
@@ -18,7 +18,7 @@ class AllRenderer extends BaseRenderer {
 
         const entering = dir.dot(hit.normal) < 0;
         const lightStrength: ColorLike = entering ? this.calculateLight(hit) : [0, 0, 0];
-        const [qr, qg, qb] = lightStrength.map(v => v * hit.angle / 180);
+        const [qr, qg, qb] = lightStrength;
         const [br, bg, bb] = hit.face.material.getColorAt(hit.face, hit.point);
         const baseColor: ColorLike = [br * qr, bg * qg, bb * qb];
 
@@ -104,7 +104,7 @@ class AllRenderer extends BaseRenderer {
                 }
             }
             
-            const angleStrength = lightDir.angleTo(hit.normal) / Math.PI;
+            const angleStrength = Math.max(lightDir.angleTo(lightHit.normal.neg()), 0);
             const strength = alpha * angleStrength * light.intensity / Math.pow(1 + (distance / light.distance), light.decay);
             lightStrength[0] += strength * light.color[0];
             lightStrength[1] += strength * light.color[1];

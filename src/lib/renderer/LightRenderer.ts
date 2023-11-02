@@ -42,21 +42,19 @@ class LightRenderer extends BaseRenderer {
                 }
             }
             
-            const angleStrength = lightDir.angleTo(hit.face.normal) / Math.PI;
+            const angleStrength = Math.max(lightDir.angleTo(hit.normal.neg()), 0);
             const strength = angleStrength * light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
             lightStrength.x += strength * light.color[0];
             lightStrength.y += strength * light.color[1];
             lightStrength.z += strength * light.color[2];
         }
 
-        const q = hit.angle / 180;
-
         const [br, bb, bg] = hit.face.material.getColorAt(hit.face, hit.point);
 
         return [
-            br * q * lightStrength.x,
-            bb * q * lightStrength.y,
-            bg * q * lightStrength.z
+            br * lightStrength.x,
+            bb * lightStrength.y,
+            bg * lightStrength.z
         ];
     }
 }

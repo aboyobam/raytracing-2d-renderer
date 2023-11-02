@@ -16,11 +16,9 @@ class LightReflectRenderer extends BaseRenderer {
             return;
         }
 
-        const lightStrength = this.calculateLight(hit);
-
-        const [qr, qg, qb] = lightStrength.map(l => l * hit.angle / 180);
+        const [qr, qg, qb] = this.calculateLight(hit);
         const [br, bg, bb] = hit.face.material.getColorAt(hit.face, hit.point);
-        const baseColor: ColorLike = [br * qr, bg * qb, bb * qg];
+        const baseColor: ColorLike = [br * qr, bg * qg, bb * qb];
 
         if (depth < this.localConfig.maxReflectionDepth) {
             if (hit.face.material.specular) {
@@ -33,7 +31,9 @@ class LightReflectRenderer extends BaseRenderer {
                 if (target) {
                     [nr, ng, nb] = target;
                 } else {
-                    nr = ng = nb = 255;
+                    nr = 0.53 * 255;
+                    ng = 0.81 * 255;
+                    nb = 0.92 * 255;
                 }
 
                 return [
@@ -48,7 +48,7 @@ class LightReflectRenderer extends BaseRenderer {
     }
 
     private calculateLight(hit: Intersection): ColorLike {
-        const lightStrength: ColorLike = [0, 0, 0];
+        const lightStrength: ColorLike = [0.2, 0.2, 0.2];
 
         // direct lumination
         for (const light of this.scene.lights) {
@@ -78,7 +78,7 @@ class LightReflectRenderer extends BaseRenderer {
                 }
             }
             
-            const angleStrength = lightDir.angleTo(hit.face.normal) / Math.PI;
+            const angleStrength = Math.max(lightDir.angleTo(lightHit.normal.neg()), 0);
             const strength = angleStrength * light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
             lightStrength[0] += strength * light.color[0];
             lightStrength[1] += strength * light.color[1];
