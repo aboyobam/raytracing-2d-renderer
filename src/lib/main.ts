@@ -23,16 +23,17 @@ window.onmessage = ({ data }) => {
                 maxDepth: 25
             },
             photonMapperSetup: {
-                maxDepth: 5,
+                delta: data.lightDelta,
+                maxDepth: data.lightMaxDepth,
                 maxSize: 2000,
                 hasAlpha: true,
-                gridGap: 0.03,
-                strengthDivider: 15,
+                gridGap: data.lightSampleGap,
+                strengthDivider: data.lightDivider,
                 enabled: data.indirectLight
             }
         }
     }
-    
+
     const worker = new Worker("/js/scenes/" + config.file + ".bundle.js");
     worker.postMessage({
         type: "config",

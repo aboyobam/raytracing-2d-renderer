@@ -25,6 +25,7 @@ export default interface AppConfig {
             enabled: boolean;
             gridGap: number;
             strengthDivider: number;
+            delta: number;
         }
     };
 }
@@ -62,13 +63,9 @@ export interface LightReflectRendererSetup {
     type: "lightReflect";
     maxReflectionDepth: number;
     lightInpercisionEpsilon: number;
-    indirectIllumination: boolean;
-    indirectIlluminationDelta: number;
 }
 
 export interface AllRendererSetup {
     type: "all";
     maxReflectionDepth: number;
-    indirectIllumination: boolean;
-    indirectIlluminationDelta: number;
 }

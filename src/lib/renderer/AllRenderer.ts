@@ -3,6 +3,7 @@ import Vector3 from "@/Vector3";
 import BaseRenderer from "./BaseRenderer";
 import { AllRendererSetup } from "@/config";
 import { Intersection } from "@/Raytracer";
+import rendererConfig from "@/rendererConfig";
 
 class AllRenderer extends BaseRenderer {
     declare protected readonly localConfig: AllRendererSetup;
@@ -111,8 +112,8 @@ class AllRenderer extends BaseRenderer {
         }
 
         // indirect lumination
-        if (this.localConfig.indirectIllumination) {
-            const delta = this.localConfig.indirectIlluminationDelta;
+        if (rendererConfig.photonMapperSetup.enabled) {
+            const delta = rendererConfig.photonMapperSetup.delta;
             const photons = Array.from(AllRenderer.photonMapper.get(hit.point, delta));
             if (photons.length) {
                 const indirects = photons.map((p) => {

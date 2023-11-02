@@ -3,6 +3,7 @@ import Vector3 from "@/Vector3";
 import BaseRenderer from "./BaseRenderer";
 import { LightReflectRendererSetup } from "@/config";
 import { Intersection } from "@/Raytracer";
+import rendererConfig from "@/rendererConfig";
 
 class LightReflectRenderer extends BaseRenderer {
     declare protected readonly localConfig: LightReflectRendererSetup;
@@ -85,8 +86,8 @@ class LightReflectRenderer extends BaseRenderer {
         }
         
 
-        if (this.localConfig.indirectIllumination) {
-            const delta = this.localConfig.indirectIlluminationDelta;
+        if (rendererConfig.photonMapperSetup.enabled) {
+            const delta = rendererConfig.photonMapperSetup.delta;
             const photons = Array.from(LightReflectRenderer.photonMapper.get(hit.point, delta));
             if (photons.length) {
                 const indirects = photons.map((p) => {
