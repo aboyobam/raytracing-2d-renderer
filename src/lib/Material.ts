@@ -29,6 +29,7 @@ export default class Material {
     illusive: number = 0;
     alpha: number = 1;
     refractiveIndex = 1;
+    doubleSided: boolean;
 
     constructor(public r = 255, public g = 255, public b = 255, public readonly name?: string, alpha?: number) {
         if (!this.name) {

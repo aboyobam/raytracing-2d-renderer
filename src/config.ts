@@ -1,7 +1,5 @@
 import type AppConfig from "@/config";
 
-// const params = new URL(location.href).searchParams;
-
 const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'], AppConfig['renderer']['renderer']>> = {
     lightReflect: {
         type: "lightReflect",
@@ -10,7 +8,7 @@ const rendererConfigs: Partial<Record<AppConfig['renderer']['renderer']['type'],
     },
     all: {
         type: "all",
-        maxReflectionDepth: 3
+        maxReflectionDepth: 25
     },
     stub: {
         type: "stub",

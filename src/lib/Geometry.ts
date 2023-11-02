@@ -10,7 +10,7 @@ export default class Geometry {
         this.faces = faces.map(face => face.clone());
     }
 
-    getBoundingBox() {
+    getBoundingBox(): [Vector3, Vector3] {
         let min = new Vector3(Infinity, Infinity, Infinity);
         let max = new Vector3(-Infinity, -Infinity, -Infinity);
     
@@ -21,6 +21,6 @@ export default class Geometry {
             max = Vector3.max(bbMax, max);
         }
 
-        return [min, max] as const;
+        return [min, max];
     }
 }
