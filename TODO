@@ -1,7 +1,7 @@
 ! light colors
 ! PhotonMapper multithreaded
 ! Alpha with light
-- BPT (bidirectional path tracing) for indirect illumination
+? BPT (bidirectional path tracing) for indirect illumination
 ! BVH optimizer
 - light direction (SpotLight, PointLight, DirectionalLight)
 - AmbientLight

@@ -10,8 +10,6 @@ export default class Face {
     uN: Vector3;
     vN: Vector3;
     wN: Vector3;
-
-
     uvMap: Readonly<[Vector3, Vector3, Vector3]>;
 
     constructor(

@@ -53,6 +53,11 @@ const setup: SetupFunction = function(buildScene: BuildScene) {
 setup.gltf = function() {
     _build = async () => {
         const scene = await GLTFParser.parse(_data.config.gltf);
+
+        // DUMMY
+        Material.all.Red.glossyness = 40;
+        Material.all.Blue.glossyness = 40;
+        Material.all.Green.glossyness = 40;
         return scene;
     }
 

@@ -17,10 +17,11 @@ class AllRenderer extends BaseRenderer {
         }
 
         const entering = dir.dot(hit.normal) < 0;
-        const lightStrength: ColorLike = entering ? this.calculateLight(hit) : [0, 0, 0];
+        const [lightStrength, gloss]: [ColorLike, ColorLike] = entering ? this.calculateLight(hit) : ([[0, 0, 0], [0, 0, 0]]);
         const [qr, qg, qb] = lightStrength;
         const [br, bg, bb] = hit.face.material.getColorAt(hit.face, hit.point);
-        const baseColor: ColorLike = [br * qr, bg * qg, bb * qb];
+
+        const baseColor: ColorLike = [br * qr + gloss[0], bg * qg + gloss[1], bb * qb + gloss[2]];
 
         if (depth < this.localConfig.maxReflectionDepth) {
             const newStrengh = hit.face.material.specular;
@@ -61,8 +62,9 @@ class AllRenderer extends BaseRenderer {
         return baseColor;
     }
 
-    private calculateLight(hit: Intersection): ColorLike {
+    private calculateLight(hit: Intersection): [ColorLike, ColorLike] {
         const lightStrength: ColorLike = [0, 0, 0];
+        const gloss: ColorLike = [0, 0, 0];
 
         // direct lumination
         light_loop: for (const light of this.scene.lights) {
@@ -103,6 +105,14 @@ class AllRenderer extends BaseRenderer {
                     continue light_loop;
                 }
             }
+
+            // gloss
+            if (hit.face.material.glossyness) {
+                const cos = hit.outDir.angleTo(lightDir) ** hit.face.material.glossyness;
+                gloss[0] += cos * light.color[0] * 100;
+                gloss[1] += cos * light.color[1] * 100;
+                gloss[2] += cos * light.color[2] * 100;
+            }
             
             const angleStrength = Math.max(lightDir.angleTo(lightHit.normal.neg()), 0);
             const strength = alpha * angleStrength * light.intensity / Math.pow(1 + (distance / light.distance), light.decay);
@@ -133,7 +143,7 @@ class AllRenderer extends BaseRenderer {
             }
         }
 
-        return lightStrength;
+        return [lightStrength, gloss];
     }
 }
 
