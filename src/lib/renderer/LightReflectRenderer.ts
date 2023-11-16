@@ -88,7 +88,7 @@ class LightReflectRenderer extends BaseRenderer {
 
         if (rendererConfig.photonMapperSetup.enabled) {
             const delta = rendererConfig.photonMapperSetup.delta;
-            const photons = Array.from(LightReflectRenderer.photonMapper.get(hit.point, delta));
+            const photons = Array.from(LightReflectRenderer.photonTree.get(hit.point, delta));
             if (photons.length) {
                 const indirects = photons.map((p) => {
                     const lengthStrength = delta / (delta + hit.point.sub(p.position).len());

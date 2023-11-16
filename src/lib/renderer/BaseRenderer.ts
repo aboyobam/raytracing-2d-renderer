@@ -4,11 +4,11 @@ import { Renderer } from "./Renderer";
 import Raytracer from "@/Raytracer";
 import AppConfig from "@/config";
 import Vector3 from "@/Vector3";
-import PhotonMapper from "@/optimizer/PhotonMapper/PhotonMapper";
 import rendererConfig from "@/rendererConfig";
+import PhotonTree from "@/optimizer/PhotonMapper/PhotonTree";
 
 export default abstract class BaseRenderer implements Renderer {
-    static photonMapper: PhotonMapper;
+    static photonTree: PhotonTree;
     protected readonly pixels: Uint8ClampedArray;
     protected rc: Raytracer;
     protected scene: Scene;
