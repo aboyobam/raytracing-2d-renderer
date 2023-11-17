@@ -11,7 +11,6 @@ import { deserialize } from "../serializable";
 import PhotonMapper from "../optimizer/PhotonMapper/PhotonMapper";
 import Raytracer from "@/Raytracer";
 import AppConfig from "@/config";
-import Vector3 from "../Vector3";
 
 self.onmessage = ({ data: { scene, offset, skip, setup } }: { data: MessageData }) => {
     deserialize(scene);
@@ -22,8 +21,7 @@ self.onmessage = ({ data: { scene, offset, skip, setup } }: { data: MessageData 
         ...setup
     });
 
-    const all = Array.from(photonMapper.get(Vector3.ZERO, Infinity));
-    self.postMessage(all);
+    self.postMessage(photonMapper.photons);
 
     self.close();
 };

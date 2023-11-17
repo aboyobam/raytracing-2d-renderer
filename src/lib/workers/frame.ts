@@ -5,6 +5,7 @@ import "../Geometry";
 import "../Mesh";
 import "../Material";
 import "../Light";
+import "../optimizer/PhotonMapper/Photon";
 
 import Camera from "../Camera";
 import Scene from "../Scene";
@@ -13,7 +14,6 @@ import { deserialize } from "../serializable";
 import OctreeOptimizer from "../optimizer/Octree/Octree";
 import rendererConfig from "../rendererConfig";
 import Photon from "../optimizer/PhotonMapper/Photon";
-import PhotonMapper from "../optimizer/PhotonMapper/PhotonMapper";
 import PhotonTree from "../optimizer/PhotonMapper/PhotonTree";
 import rendererMap from "../renderer/rendererMap";
 
@@ -28,14 +28,12 @@ self.onmessage = ({ data: { scene, photons, _data } }: { data: MessageData }) =>
 
     if (RendererClass.usesPhotonMapper) {
         const tree = new PhotonTree(scene, _data.config.photonMapperSetup.maxSize);
-        const mapper: PhotonMapper = { tree } as any;
-        Object.setPrototypeOf(mapper, PhotonMapper.prototype); 
 
         for (const photon of photons) {
             tree.add(photon);
         }
         
-        RendererClass.photonMapper = mapper;
+        RendererClass.photonTree = tree;
     }
 
     const renderer = new RendererClass(_data.buffer, _data.offset, _data.skip, _data.config.renderer);

@@ -79,6 +79,8 @@ class AllRenderer extends BaseRenderer {
             let distance = lightHit.distance;
 
             if (lightHit.face !== hit.face) {
+                continue light_loop;
+
                 alpha = 1 - lightHit.face.material.alpha;
 
                 if (alpha < 0.0001) {
@@ -124,7 +126,7 @@ class AllRenderer extends BaseRenderer {
         // indirect lumination
         if (rendererConfig.photonMapperSetup.enabled) {
             const delta = rendererConfig.photonMapperSetup.delta;
-            const photons = Array.from(AllRenderer.photonMapper.get(hit.point, delta));
+            const photons = Array.from(AllRenderer.photonTree.get(hit.point, delta));
             if (photons.length) {
                 const indirects = photons.map((p) => {
                     const lengthStrength = delta / (delta + hit.point.sub(p.position).len());
@@ -137,9 +139,9 @@ class AllRenderer extends BaseRenderer {
                     return acc;
                 }, [0, 0, 0] satisfies ColorLike);
                 
-                lightStrength[0] += indirect[0];
-                lightStrength[1] += indirect[1];
-                lightStrength[2] += indirect[2];
+                lightStrength[0] += indirect[0] / Math.sqrt(photons.length);
+                lightStrength[1] += indirect[1] / Math.sqrt(photons.length);
+                lightStrength[2] += indirect[2] / Math.sqrt(photons.length);
             }
         }
 

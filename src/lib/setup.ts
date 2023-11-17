@@ -55,9 +55,16 @@ setup.gltf = function() {
         const scene = await GLTFParser.parse(_data.config.gltf);
 
         // DUMMY
-        Material.all.Red.glossyness = 40;
-        Material.all.Blue.glossyness = 40;
-        Material.all.Green.glossyness = 40;
+        if (_data.config.gltf == "simple-scene.gltf") {
+            Material.all.Red.glossyness = 40;
+            Material.all.Blue.glossyness = 40;
+            Material.all.Green.glossyness = 40;
+        }
+
+        if (_data.config.gltf == "glass.gltf") {
+            Material.all.glass.glossyness = 30;
+        }
+
         return scene;
     }
 
@@ -104,8 +111,11 @@ async function doSetup() {
             
                     photonThread.onmessage = (event: MessageEvent<Photon[]>) => {
                         gotPhotons++;
-                        photons.push(...event.data);
-    
+
+                        for (const photon of event.data) {
+                            photons.push(photon);
+                        }
+
                         if (gotPhotons == _data.threads) {
                             return resolve();
                         }
