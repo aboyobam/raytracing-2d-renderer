@@ -62,7 +62,8 @@ export default class PhotonMapper {
         if (opts.depth > 0) {
             if (opts.backfaces == "none") {
                 const distStrength = light.intensity / Math.pow(1 + (distance / light.distance), light.decay);
-                const totalStrength = (opts.strength * distStrength) / this.config.strengthDivider;
+                const totalStrength = (opts.strength * distStrength) / this.config.strengthDivider * hit.face.material.alpha;
+                
                 if (totalStrength > 0.001) {
                     yield new Photon(hit.point, [
                         light.color[0] * totalStrength,

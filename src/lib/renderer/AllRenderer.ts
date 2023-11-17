@@ -75,39 +75,6 @@ class AllRenderer extends BaseRenderer {
                 continue;
             }
 
-            let alpha = 1;
-            let distance = lightHit.distance;
-
-            if (lightHit.face !== hit.face) {
-                continue light_loop;
-
-                alpha = 1 - lightHit.face.material.alpha;
-
-                if (alpha < 0.0001) {
-                    continue light_loop;
-                }
-                
-                let found = false;
-
-                for (const other of rest) {
-                    if (other.face === hit.face) {
-                        distance = other.distance;
-                        found = true;
-                        break;
-                    } else {
-                        alpha *= (1 - other.face.material.alpha);
-
-                        if (alpha < 0.0001) {
-                            continue light_loop;
-                        }
-                    }
-                }
-
-                if (!found) {
-                    continue light_loop;
-                }
-            }
-
             // gloss
             if (hit.face.material.glossyness) {
                 const cos = hit.outDir.angleTo(lightDir) ** hit.face.material.glossyness;
@@ -117,7 +84,7 @@ class AllRenderer extends BaseRenderer {
             }
             
             const angleStrength = Math.max(lightDir.angleTo(lightHit.normal.neg()), 0);
-            const strength = alpha * angleStrength * light.intensity / Math.pow(1 + (distance / light.distance), light.decay);
+            const strength = angleStrength * light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
             lightStrength[0] += strength * light.color[0];
             lightStrength[1] += strength * light.color[1];
             lightStrength[2] += strength * light.color[2];
