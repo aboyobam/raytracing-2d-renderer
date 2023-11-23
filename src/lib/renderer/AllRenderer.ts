@@ -46,7 +46,7 @@ class AllRenderer extends BaseRenderer {
                 }
             }
 
-            const specularTarget = entering && newStrengh && this.calulatePixel(hit.point, hit.outDir, depth + 1);
+            const specularTarget = entering && (newStrengh[0] > 0 && newStrengh[1] > 0 && newStrengh[2] > 0) && this.calulatePixel(hit.point, hit.outDir, depth + 1);
             const alphaTarget = refractedDirection && this.calulatePixel(hit.point, refractedDirection, depth + 1, backface == "none" ? "only" : "none");
 
             const [nr, ng, nb] = specularTarget || Array(3).fill(240);
@@ -63,7 +63,7 @@ class AllRenderer extends BaseRenderer {
     }
 
     private calculateLight(hit: Intersection): [ColorLike, ColorLike] {
-        const lightStrength = hit.face.material.ambient.slice() as ColorLike;
+        const lightStrength: ColorLike = [hit.face.material.ambient[0], hit.face.material.ambient[1], hit.face.material.ambient[2]];
         const gloss: ColorLike = [0, 0, 0];
 
         // direct lumination
@@ -106,9 +106,10 @@ class AllRenderer extends BaseRenderer {
                     return acc;
                 }, [0, 0, 0] satisfies ColorLike);
                 
-                lightStrength[0] += indirect[0] / Math.sqrt(photons.length);
-                lightStrength[1] += indirect[1] / Math.sqrt(photons.length);
-                lightStrength[2] += indirect[2] / Math.sqrt(photons.length);
+                const sqrtLen = Math.sqrt(photons.length);
+                lightStrength[0] += indirect[0] / sqrtLen;
+                lightStrength[1] += indirect[1] / sqrtLen;
+                lightStrength[2] += indirect[2] / sqrtLen;
             }
         }
 

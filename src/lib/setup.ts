@@ -67,12 +67,22 @@ setup.gltf = function() {
             const gold = {
                 ambient: [0.24725, 0.1995, 0.0745],
                 specular: [0.628281, 0.555802, 0.366065],
-                r: 0.75164,
-                g: 0.60648,
-                b: 0.22648,
-                glossyness: 0.4 * 128
+                r: 0.75164 * 255,
+                g: 0.60648 * 255,
+                b: 0.22648 * 255,
+                glossyness: 50
             } as Material;
-            // Object.assign(Material.all.red, gold);
+            Object.assign(Material.all.Yellow, gold);
+
+            Object.assign(Material.all.Red, {
+                // 0.0	0.0	0.0	0.5	0.0	0.0	0.7	0.6	0.6	.25
+                ambient: [0.1745, 0.01175, 0.01175],
+                specular: [0.727811, 0.626959, 0.626959],
+                r: 0.61424 * 255,
+                g: 0.04136 * 255,
+                b: 0.04136 * 255,
+                glossyness: Math.round(0.6 * 128)
+            } as Material);
         }
 
         if (_data.config.gltf == "glass.gltf") {
