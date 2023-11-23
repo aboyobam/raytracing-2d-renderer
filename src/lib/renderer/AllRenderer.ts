@@ -25,7 +25,7 @@ class AllRenderer extends BaseRenderer {
 
         if (depth < this.localConfig.maxReflectionDepth) {
             const newStrengh = hit.face.material.specular;
-            const oldStrength = 1 - newStrengh;
+            const oldStrength: ColorLike = [1 - newStrengh[0], 1 - newStrengh[1], 1 - newStrengh[2]];
             const oldAlpha = hit.face.material.alpha;
             const newAlpha = 1 - oldAlpha;
 
@@ -53,9 +53,9 @@ class AllRenderer extends BaseRenderer {
             const [ar, ag, ab] = alphaTarget || Array(3).fill(240);
 
             return [
-                (baseColor[0] * oldStrength * oldAlpha) + (nr * newStrengh) + (ar * newAlpha),
-                (baseColor[1] * oldStrength * oldAlpha) + (ng * newStrengh) + (ag * newAlpha),  
-                (baseColor[2] * oldStrength * oldAlpha) + (nb * newStrengh) + (ab * newAlpha)
+                (baseColor[0] * oldStrength[0] * oldAlpha) + (nr * newStrengh[0]) + (ar * newAlpha),
+                (baseColor[1] * oldStrength[1] * oldAlpha) + (ng * newStrengh[1]) + (ag * newAlpha),  
+                (baseColor[2] * oldStrength[2] * oldAlpha) + (nb * newStrengh[2]) + (ab * newAlpha)
             ];
         }
 
@@ -63,15 +63,15 @@ class AllRenderer extends BaseRenderer {
     }
 
     private calculateLight(hit: Intersection): [ColorLike, ColorLike] {
-        const lightStrength: ColorLike = [0, 0, 0];
+        const lightStrength = hit.face.material.ambient.slice() as ColorLike;
         const gloss: ColorLike = [0, 0, 0];
 
         // direct lumination
-        light_loop: for (const light of this.scene.lights) {
+        for (const light of this.scene.lights) {
             const lightDir = hit.point.sub(light.worldPosition).norm();
-            const [lightHit, ...rest] = this.rc.intersectOrder(light.worldPosition, lightDir);
+            const [lightHit] = this.rc.intersectOrder(light.worldPosition, lightDir);
 
-            if (!lightHit) {
+            if (!lightHit || lightHit.face !== hit.face) {
                 continue;
             }
 

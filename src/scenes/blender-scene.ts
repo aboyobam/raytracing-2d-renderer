@@ -42,7 +42,7 @@ setup(async ({ scene, camera }) => {
     const [min, max] = geo.getBoundingBox();
     const mirrorGeo = new CubeGeometry(max.x - min.x + 2 * offset, max.y - min.y + 6 * offset, 0.1);
     const mirrorMat = Material.WHITE.clone();
-    mirrorMat.specular = 0.5;
+    mirrorMat.specular = [0.5, 0.5, 0.5];
     mirrorMat.illusive = 0.8;
 
     const mirror = new Mesh(mirrorGeo, mirrorMat);

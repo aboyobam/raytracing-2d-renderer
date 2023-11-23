@@ -250,7 +250,7 @@ export default class GLTFParser {
         mat.g = g;
         mat.b = b;
         mat.alpha = baseColor[3];
-        mat.specular = metallic;
+        mat.specular = [metallic, metallic, metallic];
         mat.illusive = metallic;
         return mat;
     }

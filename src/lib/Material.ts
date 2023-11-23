@@ -25,12 +25,13 @@ export default class Material {
     private static materialCounter = 0;
     
     texture?: ImageData;
-    specular: number = 0;
+    specular: ColorLike = [0, 0, 0];
     illusive: number = 0;
     alpha: number = 1;
     refractiveIndex = 1;
     glossyness = 0;
     doubleSided: boolean;
+    ambient: ColorLike = [0, 0, 0];
 
     constructor(public r = 255, public g = 255, public b = 255, public readonly name?: string, alpha?: number) {
         if (!this.name) {

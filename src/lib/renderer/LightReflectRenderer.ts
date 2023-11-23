@@ -23,7 +23,7 @@ class LightReflectRenderer extends BaseRenderer {
         if (depth < this.localConfig.maxReflectionDepth) {
             if (hit.face.material.specular) {
                 const newStrengh = hit.face.material.specular;
-                const oldStrength = 1 - newStrengh;
+                const oldStrength: ColorLike = [1 - newStrengh[0], 1 - newStrengh[1], 1 - newStrengh[2]];
                 
                 const target = this.calulatePixel(hit.point, hit.outDir, depth + 1);
 
@@ -37,9 +37,9 @@ class LightReflectRenderer extends BaseRenderer {
                 }
 
                 return [
-                    baseColor[0] * oldStrength + nr * newStrengh,
-                    baseColor[1] * oldStrength + ng * newStrengh,  
-                    baseColor[2] * oldStrength + nb * newStrengh                    
+                    baseColor[0] * oldStrength[0] + nr * newStrengh[0],
+                    baseColor[1] * oldStrength[1] + ng * newStrengh[1],  
+                    baseColor[2] * oldStrength[2] + nb * newStrengh[2]                    
                 ];
             }
         }

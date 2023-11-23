@@ -56,9 +56,23 @@ setup.gltf = function() {
 
         // DUMMY
         if (_data.config.gltf == "simple-scene.gltf") {
-            Material.all.Red.glossyness = 40;
+            // Material.all.Red.glossyness = 40;
             Material.all.Blue.glossyness = 40;
             Material.all.Green.glossyness = 40;
+
+            console.log(Material.all.Red);
+            
+
+            // 0.24725	0.1995	0.0745	0.75164	0.60648	0.22648	0.628281	0.555802	0.366065	0.4
+            const gold = {
+                ambient: [0.24725, 0.1995, 0.0745],
+                specular: [0.628281, 0.555802, 0.366065],
+                r: 0.75164,
+                g: 0.60648,
+                b: 0.22648,
+                glossyness: 0.4 * 128
+            } as Material;
+            // Object.assign(Material.all.red, gold);
         }
 
         if (_data.config.gltf == "glass.gltf") {
