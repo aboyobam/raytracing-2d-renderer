@@ -7,7 +7,7 @@ export default abstract class Object3D {
 
     get worldPosition(): Vector3 {
         if (this.parent) {
-            return this.parent.worldPosition.add(this.position);
+            return this.parent.worldPosition.clone().add(this.position);
         } else {
             return this.position;
         }

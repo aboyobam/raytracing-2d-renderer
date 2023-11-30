@@ -8,6 +8,6 @@ export default class Camera {
     constructor(public fov: number, public aspectRatio: number, public near: number) {}
 
     lookAt(v: Vector3) {
-        this.target = v.sub(this.position).norm();
+        this.target = v.clone().sub(this.position).norm();
     }
 }

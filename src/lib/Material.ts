@@ -52,9 +52,9 @@ export default class Material {
         }
 
         const [a, b, c] = face;
-        const v0 = b.sub(a);
-        const v1 = c.sub(a);
-        const v2 = point.sub(a);
+        const v0 = b.clone().sub(a);
+        const v1 = c.clone().sub(a);
+        const v2 = point.clone().sub(a);
 
         const d00 = v0.dot(v0);
         const d01 = v0.dot(v1);

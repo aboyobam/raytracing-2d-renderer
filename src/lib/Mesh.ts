@@ -16,7 +16,7 @@ export default class Mesh extends Object3D {
         const radians = angle * (Math.PI / 180);
         const cos = Math.cos(radians);
         const sin = Math.sin(radians);
-        const { x: u, y: v, z: w } = axis.norm();
+        const { x: u, y: v, z: w } = axis.clone().norm();
         
         const rotatedX = vertex.x * (cos + u * u * (1 - cos))
                         + vertex.y * (u * v * (1 - cos) - w * sin)
@@ -38,13 +38,6 @@ export default class Mesh extends Object3D {
     add(mesh: Mesh) {
         mesh.parent = this;
         this.children.push(mesh);
-    }
-
-    attach(mesh: Mesh) {
-        this.add(mesh);
-        for (const child of mesh) {
-            child.position.sub(this.position);
-        }
     }
 
     rotate(axis: Vector3, angle: number): void {

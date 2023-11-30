@@ -34,15 +34,15 @@ class AllRenderer extends BaseRenderer {
             if (newAlpha) {
                 const n1 = entering ? 1.0 : hit.face.material.refractiveIndex;
                 const n2 = entering ? hit.face.material.refractiveIndex : 1.0;
-                const normal = entering ? hit.normal : hit.normal.neg();
-                const incidenceDir = dir.neg();
+                const normal = entering ? hit.normal : hit.normal.clone().neg();
+                const incidenceDir = dir.clone().neg();
                 const cosineThetaI = incidenceDir.dot(normal);
                 const sin2ThetaI = Math.max(0, 1 - cosineThetaI * cosineThetaI);
                 const sin2ThetaT = (n1 / n2) * (n1 / n2) * sin2ThetaI;
     
                 if (sin2ThetaT < 1) {
                     const cosineThetaT = Math.sqrt(1 - sin2ThetaT);
-                    refractedDirection = incidenceDir.multScalar(n1 / n2).sub(normal.multScalar((n1 / n2) * cosineThetaI + cosineThetaT));
+                    refractedDirection = incidenceDir.clone().multScalar(n1 / n2).sub(normal.clone().multScalar((n1 / n2) * cosineThetaI + cosineThetaT));
                 }
             }
 
@@ -72,7 +72,7 @@ class AllRenderer extends BaseRenderer {
                 continue;
             }
             
-            const lightDir = hit.point.sub(light.worldPosition).norm();
+            const lightDir = hit.point.clone().sub(light.worldPosition).norm();
             const [lightHit] = this.rc.intersectOrder(light.worldPosition, lightDir);
 
             if (!lightHit || lightHit.face !== hit.face) {
@@ -87,7 +87,7 @@ class AllRenderer extends BaseRenderer {
                 gloss[2] += cos * light.color[2] * 100;
             }
             
-            const angleStrength = Math.max(lightDir.angleTo(lightHit.normal.neg()), 0);
+            const angleStrength = Math.max(lightDir.angleTo(lightHit.normal.clone().neg()), 0);
             const strength = angleStrength * light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
             lightStrength[0] += strength * light.color[0];
             lightStrength[1] += strength * light.color[1];
@@ -100,7 +100,7 @@ class AllRenderer extends BaseRenderer {
             const photons = Array.from(AllRenderer.photonTree.get(hit.point, delta));
             if (photons.length) {
                 const indirects = photons.map((p) => {
-                    const lengthStrength = delta / (delta + hit.point.sub(p.position).len());
+                    const lengthStrength = delta / (delta + hit.point.clone().sub(p.position).len());
                     return p.color.map(c => c * lengthStrength) as ColorLike;
                 });
                 const indirect = indirects.reduce((acc, s) => {

@@ -84,15 +84,15 @@ export default class PhotonMapper {
                 const entering = opts.backfaces == "none";
                 const n1 = entering ? 1.0 : hit.face.material.refractiveIndex;
                 const n2 = entering ? hit.face.material.refractiveIndex : 1.0;
-                const normal = entering ? hit.normal : hit.normal.neg();
-                const incidenceDir = dir.neg();
+                const normal = entering ? hit.normal : hit.normal.clone().neg();
+                const incidenceDir = dir.clone().neg();
                 const cosineThetaI = incidenceDir.dot(normal);
                 const sin2ThetaI = Math.max(0, 1 - cosineThetaI * cosineThetaI);
                 const sin2ThetaT = (n1 / n2) * (n1 / n2) * sin2ThetaI;
     
                 if (sin2ThetaT < 1) {
                     const cosineThetaT = Math.sqrt(1 - sin2ThetaT);
-                    const alphaDir = incidenceDir.multScalar(n1 / n2).sub(normal.multScalar((n1 / n2) * cosineThetaI + cosineThetaT));
+                    const alphaDir = incidenceDir.clone().multScalar(n1 / n2).sub(normal.clone().multScalar((n1 / n2) * cosineThetaI + cosineThetaT));
                     yield* this.trackLight(light, hit.point, alphaDir, {
                         distance,
                         backfaces: entering ? "only" : "none",

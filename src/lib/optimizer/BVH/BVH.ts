@@ -61,7 +61,7 @@ class BVHNode {
     }
 
     private getLargestAxis(): 'x' | 'y' | 'z' {
-        const size = this.boundingBox[1].sub(this.boundingBox[0]);
+        const size = this.boundingBox[1].clone().sub(this.boundingBox[0]);
         if (size.x > size.y && size.x > size.z) {
             return 'x';
         } else if (size.y > size.z) {

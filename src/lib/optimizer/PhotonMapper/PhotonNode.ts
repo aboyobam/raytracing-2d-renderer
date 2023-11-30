@@ -68,7 +68,7 @@ export default class PhotonNode {
         for (const x of [0, 1]) {
             for (const y of [0, 1]) {
                 for (const z of [0, 1]) {
-                    const newPos = this.position.add(new Vector3((x - 0.5) * this.size, (y - 0.5) * this.size, (z - 0.5) * this.size));
+                    const newPos = this.position.clone().add(new Vector3((x - 0.5) * this.size, (y - 0.5) * this.size, (z - 0.5) * this.size));
                     this.children.push(new PhotonNode(this.tree, newPos, this.size / 2));
                 }
             }

@@ -28,20 +28,20 @@ export default abstract class BaseRenderer implements Renderer {
         const planeHeight = 2 * Math.tan((camera.fov / 4) * (Math.PI / 180)) * camera.near;
         const planeWidth = planeHeight * camera.aspectRatio;
 
-        const forward = camera.target.norm(); 
-        const right = camera.up.cross(forward).norm();
+        const forward = camera.target.clone().norm(); 
+        const right = camera.up.clone().cross(forward).norm();
         // const right = forward.cross(camera.up).norm();
 
-        const up = forward.cross(right).norm(); 
-        const center = camera.position.add(forward.multScalar(camera.near));
-        const halfUp = up.multScalar(planeHeight / 2);
-        const halfRight = right.multScalar(planeWidth / 2);
+        const up = forward.clone().cross(right).norm(); 
+        const center = camera.position.clone().add(forward.clone().multScalar(camera.near));
+        const halfUp = up.clone().multScalar(planeHeight / 2);
+        const halfRight = right.clone().multScalar(planeWidth / 2);
 
-        const topLeft = center.add(halfUp).sub(halfRight);
-        const topRight = center.add(halfUp).add(halfRight);
-        const bottomLeft = center.sub(halfUp).sub(halfRight);
+        const topLeft = center.clone().add(halfUp).sub(halfRight);
+        const topRight = center.clone().add(halfUp).add(halfRight);
+        const bottomLeft = center.clone().sub(halfUp).sub(halfRight);
 
-        const xStep = topRight.sub(topLeft).multScalar(1 / rendererConfig.width);
+        const xStep = topRight.clone().sub(topLeft).multScalar(1 / rendererConfig.width);
         // const xStep = topLeft.sub(topRight).multScalar(1 / rendererConfig.width);
 
         const yStep = bottomLeft.sub(topLeft).multScalar(1 / rendererConfig.height);
@@ -62,13 +62,14 @@ export default abstract class BaseRenderer implements Renderer {
                     .norm();*/
 
                 const dir = topRight
-                    .sub(xStep.multScalar(x)) // Notice the subtraction here
-                    .add(yStep.multScalar(y))
+                    .clone()
+                    .sub(xStep.clone().multScalar(x)) // Notice the subtraction here
+                    .add(yStep.clone().multScalar(y))
                     .sub(camera.position)
                     .norm();
                 
 
-                const origin = camera.position.add(camera.target.multScalar(camera.near));
+                const origin = camera.position.clone().add(camera.target.clone().multScalar(camera.near));
                 const color = this.calulatePixel(origin, dir);
 
                 if (color) {

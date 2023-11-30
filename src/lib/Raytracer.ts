@@ -17,7 +17,8 @@ export default class Raytracer {
     }
 
     *castRay(origin: Vector3, dir: Vector3, backfaces: Backfaces = "none"): IterableIterator<Intersection> {
-        const normDir = dir.norm();
+        const normDir = dir.clone().norm();
+        origin = origin.add(normDir.clone().multScalar(Raytracer.EPSILON));
 
         for (const face of this.optimizer.intersects(origin, normDir)) {
             // if (!intersectsBounds(origin, normDir, ...face.getBoundingBox())) {
@@ -50,12 +51,10 @@ export default class Raytracer {
     }
 
     private checkRay(face: Face, origin: Vector3, normDir: Vector3): Intersection {
-        origin = origin.add(normDir.multScalar(Raytracer.EPSILON));
-
         // Möller–Trumbore
-        const edge1 = face.v.sub(face.u);
-        const edge2 = face.w.sub(face.u);
-        const h = normDir.cross(edge2);
+        const edge1 = face.v.clone().sub(face.u);
+        const edge2 = face.w.clone().sub(face.u);
+        const h = normDir.clone().cross(edge2);
         const a = edge1.dot(h);
         
         if (a > -Raytracer.EPSILON && a < Raytracer.EPSILON) {
@@ -63,7 +62,7 @@ export default class Raytracer {
         }
 
         const f = 1.0 / a;
-        const s = origin.sub(face.u);
+        const s = origin.clone().clone().sub(face.u);
         const u = f * s.dot(h);
         if (u < 0.0 || u > 1.0) {
             return;
@@ -77,17 +76,17 @@ export default class Raytracer {
 
         const t = f * edge2.dot(q);
         if (t > Raytracer.EPSILON) {
-            const point = origin.add(normDir.multScalar(t));
+            const point = origin.clone().add(normDir.clone().multScalar(t));
             const gamma = 1 - u - v;
             const normal = (!face.uN || !face.vN || !face.wN) ? face.normal :
-                face.uN.multScalar(gamma).add(face.vN.multScalar(u)).add(face.wN.multScalar(v)).norm();
+                face.uN.clone().multScalar(gamma).clone().add(face.vN.clone().multScalar(u)).clone().add(face.wN.clone().multScalar(v)).norm();
 
             const dotProduct = normDir.dot(normal);
             const clampedDotProduct = Math.max(-1, Math.min(1, dotProduct));
             const angle = Math.acos(clampedDotProduct) * (180 / Math.PI);
-            const distance = origin.sub(point).len();
-            const reflectionAdjustment = normal.multScalar(2 * dotProduct);
-            const outDir = normDir.sub(reflectionAdjustment).norm();
+            const distance = origin.clone().sub(point).len();
+            const reflectionAdjustment = normal.clone().multScalar(2 * dotProduct);
+            const outDir = normDir.clone().sub(reflectionAdjustment).norm();
     
             return { angle, point, distance, face, outDir, normal };
         }

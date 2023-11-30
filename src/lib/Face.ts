@@ -55,9 +55,9 @@ export default class Face {
     }
 
     translate(v: Vector3) {
-        this.u = this.u.add(v);
-        this.v = this.v.add(v);
-        this.w = this.w.add(v);
+        this.u.add(v);
+        this.v.add(v);
+        this.w.add(v);
 
         this.boundingBox = null;
 

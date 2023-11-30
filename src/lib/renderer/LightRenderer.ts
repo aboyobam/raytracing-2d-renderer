@@ -8,7 +8,7 @@ class LightRenderer extends BaseRenderer {
 
     protected calulatePixel(origin: Vector3, dir: Vector3): ColorLike {
         const [hit] = this.rc.intersectOrder(origin, dir);
-                
+
         if (!hit) {
             return;
         }
@@ -16,7 +16,7 @@ class LightRenderer extends BaseRenderer {
         //#region light
         const lightStrength = new Vector3();
         for (const light of this.scene.lights) {
-            const lightDir = hit.point.sub(light.worldPosition).norm();
+            const lightDir = hit.point.clone().sub(light.worldPosition).norm();
             const [lightHit, ...rest] = this.rc.intersectOrder(light.worldPosition, lightDir);
 
             if (!lightHit) {
@@ -42,7 +42,7 @@ class LightRenderer extends BaseRenderer {
                 }
             }
             
-            const angleStrength = Math.max(lightDir.angleTo(hit.normal.neg()), 0);
+            const angleStrength = Math.max(lightDir.angleTo(hit.normal.clone().neg()), 0);
             const strength = angleStrength * light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
             lightStrength.x += strength * light.color[0];
             lightStrength.y += strength * light.color[1];

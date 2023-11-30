@@ -52,7 +52,7 @@ class LightReflectRenderer extends BaseRenderer {
 
         // direct lumination
         for (const light of this.scene.lights) {
-            const lightDir = hit.point.sub(light.worldPosition).norm();
+            const lightDir = hit.point.clone().sub(light.worldPosition).norm();
             const [lightHit, ...rest] = this.rc.intersectOrder(light.worldPosition, lightDir);
 
             if (!lightHit) {
@@ -78,7 +78,7 @@ class LightReflectRenderer extends BaseRenderer {
                 }
             }
             
-            const angleStrength = Math.max(lightDir.angleTo(lightHit.normal.neg()), 0);
+            const angleStrength = Math.max(lightDir.angleTo(lightHit.normal.clone().neg()), 0);
             const strength = angleStrength * light.intensity / Math.pow(1 + (lightHit.distance / light.distance), light.decay);
             lightStrength[0] += strength * light.color[0];
             lightStrength[1] += strength * light.color[1];

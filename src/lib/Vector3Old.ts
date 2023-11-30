@@ -11,7 +11,7 @@ export default class Vector3 {
     }
 
     static midpoint(a: Vector3, b: Vector3): Vector3 {
-        return new Vector3((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
+        return a.add(b).multScalar(1 / 2);
     }
 
     static min(...vertecies: Vector3[]): Vector3 {
@@ -50,38 +50,23 @@ export default class Vector3 {
     }
 
     neg() {
-        this.x *= -1;
-        this.y *= -1;
-        this.z *= -1;
-        return this;
+        return this.multScalar(-1);
     }
 
     add(v: Vector3) {
-        this.x += v.x;
-        this.y += v.y;
-        this.z += v.z;
-        return this;
+        return new Vector3(this.x + v.x, this.y + v.y, this.z + v.z);
     }
 
     sub(v: Vector3) {
-        this.x -= v.x;
-        this.y -= v.y;
-        this.z -= v.z;
-        return this;
+        return new Vector3(this.x - v.x, this.y - v.y, this.z - v.z);
     }
 
     mult(v: Vector3) {
-        this.x *= v.x;
-        this.y *= v.y;
-        this.z *= v.z;
-        return this;
+        return new Vector3(this.x * v.x, this.y * v.y, this.z * v.z);
     }
 
     multScalar(s: number) {
-        this.x *= s;
-        this.y *= s;
-        this.z *= s;
-        return this;
+        return new Vector3(this.x * s, this.y * s, this.z * s);
     }
 
     lenSq() {
@@ -104,7 +89,7 @@ export default class Vector3 {
         const x = this.y * v.z - this.z * v.y;
         const y = this.z * v.x - this.x * v.z;
         const z = this.x * v.y - this.y * v.x;
-        return this.set(x, y, z);
+        return new Vector3(x, y, z);
     }
 
     norm() {
@@ -115,8 +100,7 @@ export default class Vector3 {
             return this;
         }
         
-        return this.multScalar(1 / length);
-        // return new Vector3(this.x / length, this.y / length, this.z / length);
+        return new Vector3(this.x / length, this.y / length, this.z / length);
     }
 
     *[Symbol.iterator]() {
