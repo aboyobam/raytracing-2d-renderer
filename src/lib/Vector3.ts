@@ -1,7 +1,6 @@
 import serializable from "./serializable";
 
 @serializable("Vector3")
-
 export default class Vector3 {
     static get ZERO() {
         return new Vector3();

@@ -60,9 +60,6 @@ setup.gltf = function() {
             Material.all.Blue.glossyness = 40;
             Material.all.Green.glossyness = 40;
 
-            console.log(Material.all.Red);
-            
-
             // 0.24725	0.1995	0.0745	0.75164	0.60648	0.22648	0.628281	0.555802	0.366065	0.4
             const gold = {
                 ambient: [0.24725, 0.1995, 0.0745],
@@ -83,6 +80,10 @@ setup.gltf = function() {
                 b: 0.04136 * 255,
                 glossyness: Math.round(0.6 * 128)
             } as Material);
+        }
+
+        if (_data.config.gltf == "emmiting.gltf") {
+            Material.all.Material.emmitting = [0.2, 0.4, 4];
         }
 
         if (_data.config.gltf == "glass.gltf") {

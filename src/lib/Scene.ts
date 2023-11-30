@@ -4,6 +4,7 @@ import Material from "./Material";
 import Mesh from "./Mesh";
 import Object3D from "./Object3D";
 import Vector3 from "./Vector3";
+import createScanSamples from "./optimizer/PhotonMapper/createScanSamples";
 import serializable from "./serializable";
 
 @serializable("Scene")
@@ -32,7 +33,7 @@ export default class Scene extends Object3D {
     build() {
         const [bbMin, bbMax] = this.boundingBox;
 
-        for (const mesh of this.meshes) {
+        for (const mesh of this) {
             for (const face of mesh.geometry.faces) {
                 face.translate(mesh.worldPosition);
                 
@@ -43,11 +44,30 @@ export default class Scene extends Object3D {
                 face.material ??= mesh.material ?? Material.NONE;
             }
         }
+
+        // emmiting
+        for (const mesh of this) {
+            for (const face of mesh.geometry.faces) {
+                const [intensity, distance, decay] = face.material.emmitting;
+                if (!intensity) {
+                    continue;
+                }
+
+                face.material.ambient = [intensity * face.material.r / 100, intensity * face.material.b / 100, intensity * face.material.b / 100];
+
+                for (const point of createScanSamples(face, 0.4)) {
+                    const color = face.material.getColorAt(face, point);
+                    const light = new Light(intensity, distance, decay);
+                    light.ignoreIndirect = true;
+                    light.color = color;
+                    light.fromFace = face;
+                    this.addLight(light);
+                }
+            }
+        }
     }
 
     *[Symbol.iterator]() {
-        for (const mesh of this.meshes) {
-            yield* mesh;
-        }
+        yield* this.meshes;
     }
 }

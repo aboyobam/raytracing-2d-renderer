@@ -32,6 +32,7 @@ export default class Material {
     glossyness = 0;
     doubleSided: boolean;
     ambient: ColorLike = [0, 0, 0];
+    emmitting: ColorLike = [0, 0, 0];
 
     constructor(public r = 255, public g = 255, public b = 255, public readonly name?: string, alpha?: number) {
         if (!this.name) {
@@ -45,9 +46,9 @@ export default class Material {
         }
     };
 
-    getColorAt(face: Face, point: Vector3) {
+    getColorAt(face: Face, point: Vector3): ColorLike {
         if (!this.texture || !face.uvMap) {
-            return [this.r, this.g, this.b] as const;
+            return [this.r, this.g, this.b];
         }
 
         const [a, b, c] = face;
@@ -77,7 +78,7 @@ export default class Material {
             face.material.texture.data[index],
             face.material.texture.data[index + 1],
             face.material.texture.data[index + 2]
-        ] as const;
+        ];
     }
 
     clone() {

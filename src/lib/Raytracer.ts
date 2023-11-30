@@ -1,9 +1,7 @@
 import Face from "./Face";
 import Scene from "./Scene";
 import Vector3 from "./Vector3";
-import intersectsBounds from "./intersects-bounds";
 import BVHOptimizer from "./optimizer/BVH/BVH";
-import OctreeOptimizer from "./optimizer/Octree/Octree";
 import Optimizer from "./optimizer/Optimizer";
 
 type Backfaces = "none" | "only" | "both";

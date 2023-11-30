@@ -12,9 +12,7 @@ setup(async ({ scene, camera }) => {
     const geo = await OBJParser.parse("scene.obj");
     
     const mesh = new Mesh(geo, new Material(250, 0, 0));
-    // mesh.material.illusive = 0.2;
-    // mesh.material.alpha = 0.5;
-    // mesh.position.set(0, -2, 6);
+    mesh.material.emmitting = [0.2, 5, 3];
 
     const lightTop = new Light(1.5, 20, 1.5);
     lightTop.position.copy(mesh.position.add(new Vector3(0, 10, 0)));

@@ -68,6 +68,10 @@ class AllRenderer extends BaseRenderer {
 
         // direct lumination
         for (const light of this.scene.lights) {
+            if (light.fromFace === hit.face) {
+                continue;
+            }
+            
             const lightDir = hit.point.sub(light.worldPosition).norm();
             const [lightHit] = this.rc.intersectOrder(light.worldPosition, lightDir);
 

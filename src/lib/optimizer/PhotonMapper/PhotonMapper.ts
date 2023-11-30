@@ -1,5 +1,4 @@
 import Scene from "@/Scene";
-import PhotonTree from "./PhotonTree";
 import Raytracer from "@/Raytracer";
 import Vector3 from "@/Vector3";
 import Photon from "./Photon";
@@ -26,6 +25,10 @@ export default class PhotonMapper {
 
     private build() {
         for (const light of this.scene.lights) {
+            if (light.ignoreIndirect) {
+                continue;
+            }
+
             const pos = light.worldPosition;
             for (const dir of magicSpiral(this.config.gridGap * 1_000_000, this.config.offset, this.config.skip)) {
                 if (!intersectsBounds(pos, dir, ...this.scene.boundingBox)) {

@@ -24,13 +24,12 @@ class AlphaRenderer extends BaseRenderer {
             }
         }
 
-        const { r, g, b, alpha }: Material = colors.reduce((acc, [hit, s]) => {
+        const { r, g, b }: Material = colors.reduce((acc, [hit, s]) => {
             const [r, g, b] = hit.face.material.getColorAt(hit.face, hit.point);
             const q = hit.angle / 180;
             acc.r += r * q * s; 
             acc.g += g * q * s; 
             acc.b += b * q * s; 
-            acc.alpha += s * 255;
             return acc;
         }, new Material(0, 0, 0, null, 0));
 
