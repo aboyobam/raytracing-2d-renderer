@@ -1,3 +1,4 @@
+import qSqrt from "./qSqrt";
 import serializable from "./serializable";
 
 @serializable("Vector3")
@@ -94,14 +95,16 @@ export default class Vector3 {
     }
 
     norm() {
-        const length = this.len();
+        /*const length = this.len();
         if (length === 0) return new Vector3();
 
         if (length === 1) {
             return this;
         }
         
-        return new Vector3(this.x / length, this.y / length, this.z / length);
+        return new Vector3(this.x / length, this.y / length, this.z / length);*/
+        const mul = qSqrt(this.x ** 2 + this.y ** 2 + this.z ** 2);
+        return this.clone().multScalar(mul);
     }
 
     *[Symbol.iterator]() {

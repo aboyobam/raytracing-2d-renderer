@@ -90,6 +90,10 @@ setup.gltf = function() {
             Material.all.glass.glossyness = 30;
         }
 
+        if (_data.config.gltf == "mod.gltf") {
+            Material.all.Pottery.glossyness = 10;
+        }
+
         return scene;
     }
 
@@ -106,6 +110,11 @@ async function doSetup() {
     
     const scene = await _build();
     scene.build();
+
+    console.log(scene.lights);
+    console.log(Material.all);
+    
+    
 
     self.postMessage({
         type: "aspect",

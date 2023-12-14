@@ -2,6 +2,8 @@ import Face from "./Face";
 import Scene from "./Scene";
 import Vector3 from "./Vector3";
 import BVHOptimizer from "./optimizer/BVH/BVH";
+import NoopOptimizer from "./optimizer/NoopOptimizer";
+import OctreeOptimizer from "./optimizer/Octree/Octree";
 import Optimizer from "./optimizer/Optimizer";
 
 type Backfaces = "none" | "only" | "both";
@@ -12,8 +14,9 @@ export default class Raytracer {
     private readonly optimizer: Optimizer;
 
     constructor(public readonly scene: Scene) {
+        this.optimizer = new NoopOptimizer(scene);
         // this.optimizer = new OctreeOptimizer(scene);
-        this.optimizer = new BVHOptimizer(scene);
+        // this.optimizer = new BVHOptimizer(scene);
     }
 
     *castRay(origin: Vector3, dir: Vector3, backfaces: Backfaces = "none"): IterableIterator<Intersection> {
@@ -81,6 +84,12 @@ export default class Raytracer {
             const gamma = 1 - u - v;
             const normal = (!face.uN || !face.vN || !face.wN) ? face.normal :
                 face.uN.multScalar(gamma).add(face.vN.multScalar(u)).add(face.wN.multScalar(v)).norm();
+
+            /*if (normDir.dot(normal) > 0) {
+                normal.x *= -1;
+                normal.y *= -1;
+                normal.z *= -1;
+            }*/
 
             const dotProduct = normDir.dot(normal);
             const clampedDotProduct = Math.max(-1, Math.min(1, dotProduct));

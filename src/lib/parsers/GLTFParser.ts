@@ -20,6 +20,17 @@ export default class GLTFParser {
 
             if ("mesh" in gltfNode) {
                 const mesh = await GLTFParser.parseMesh(gltf, gltfNode);
+
+                if (gltfNode.children?.length) {
+                    for (const childIndex of gltfNode.children) {
+                        const childNode = gltf.nodes[childIndex];
+                        
+                        if (typeof childNode.mesh === "number") {
+                            const child = await GLTFParser.parseMesh(gltf, childNode);
+                            mesh.add(child);
+                        }
+                    }
+                }
                 scene.add(mesh);
 
                 continue;
