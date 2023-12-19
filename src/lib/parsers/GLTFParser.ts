@@ -40,11 +40,12 @@ export default class GLTFParser {
                 if (gltfNode.extensions.KHR_lights_punctual) {
                     const gltfLight = gltf.extensions.KHR_lights_punctual.lights[gltfNode.extensions.KHR_lights_punctual.light];
 
-                    const { intensity, distance, decay } = gltfLight.extras || {};
+                    const { intensity, distance, decay, indirect } = gltfLight.extras || {};
                     if (typeof intensity == "number" && typeof distance === "number" && typeof decay === "number") {
                         const light = new Light(intensity, distance, decay);
                         light.position.set(gltfNode.translation[0], gltfNode.translation[1], gltfNode.translation[2]);
                         light.color = gltfLight.color;
+                        light.indirect = indirect;
                         scene.addLight(light);
                     }
                 }

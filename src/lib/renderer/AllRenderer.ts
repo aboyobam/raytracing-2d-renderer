@@ -66,9 +66,13 @@ class AllRenderer extends BaseRenderer {
         const lightStrength: ColorLike = [hit.face.material.ambient[0], hit.face.material.ambient[1], hit.face.material.ambient[2]];
         const gloss: ColorLike = [0, 0, 0];
 
+        if (hit.face.material.ambientOnly) {
+            return [lightStrength, gloss];
+        }
+
         // direct lumination
         for (const light of this.scene.lights) {
-            if (light.fromFace === hit.face) {
+            if (light.indirect || light.fromFace === hit.face) {
                 continue;
             }
             

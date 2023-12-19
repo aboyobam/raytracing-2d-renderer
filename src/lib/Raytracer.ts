@@ -14,9 +14,9 @@ export default class Raytracer {
     private readonly optimizer: Optimizer;
 
     constructor(public readonly scene: Scene) {
-        this.optimizer = new NoopOptimizer(scene);
+        // this.optimizer = new NoopOptimizer(scene);
         // this.optimizer = new OctreeOptimizer(scene);
-        // this.optimizer = new BVHOptimizer(scene);
+        this.optimizer = new BVHOptimizer(scene);
     }
 
     *castRay(origin: Vector3, dir: Vector3, backfaces: Backfaces = "none"): IterableIterator<Intersection> {

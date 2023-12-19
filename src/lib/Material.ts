@@ -33,6 +33,7 @@ export default class Material {
     doubleSided: boolean;
     ambient: ColorLike = [0, 0, 0];
     emmitting: ColorLike = [0, 0, 0];
+    ambientOnly = false;
 
     constructor(public r = 255, public g = 255, public b = 255, public readonly name?: string, alpha?: number) {
         if (!this.name) {

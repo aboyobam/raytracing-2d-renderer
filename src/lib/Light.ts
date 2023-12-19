@@ -7,6 +7,7 @@ export default class Light extends Object3D {
     color: ColorLike = [1, 1, 1];
     ignoreIndirect: boolean;
     fromFace: Face;
+    indirect: boolean;
 
     constructor(public readonly intensity: number, public readonly distance: number, public readonly decay: number) {
         super();

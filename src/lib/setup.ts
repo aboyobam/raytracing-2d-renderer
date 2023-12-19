@@ -54,23 +54,19 @@ setup.gltf = function() {
     _build = async () => {
         const scene = await GLTFParser.parse(_data.config.gltf);
 
-        // DUMMY
+        const gold = {
+            ambient: [0.24725, 0.1995, 0.0745],
+            specular: [0.628281, 0.555802, 0.366065],
+            r: 0.75164 * 255,
+            g: 0.60648 * 255,
+            b: 0.22648 * 255,
+            glossyness: 50
+        } as Material;
         if (_data.config.gltf == "simple-scene.gltf") {
             // Material.all.Red.glossyness = 40;
             Material.all.Blue.glossyness = 40;
             Material.all.Green.glossyness = 40;
-
-            // 0.24725	0.1995	0.0745	0.75164	0.60648	0.22648	0.628281	0.555802	0.366065	0.4
-            const gold = {
-                ambient: [0.24725, 0.1995, 0.0745],
-                specular: [0.628281, 0.555802, 0.366065],
-                r: 0.75164 * 255,
-                g: 0.60648 * 255,
-                b: 0.22648 * 255,
-                glossyness: 50
-            } as Material;
             Object.assign(Material.all.Yellow, gold);
-
             Object.assign(Material.all.Red, {
                 // 0.0	0.0	0.0	0.5	0.0	0.0	0.7	0.6	0.6	.25
                 ambient: [0.1745, 0.01175, 0.01175],
@@ -90,8 +86,14 @@ setup.gltf = function() {
             Material.all.glass.glossyness = 30;
         }
 
-        if (_data.config.gltf == "mod.gltf") {
+        if (_data.config.gltf == "mod.gltf" || _data.config.gltf == "final.gltf") {
             Material.all.Pottery.glossyness = 10;
+            Material.all.Garden.ambient = [1, 1, 1];
+            Material.all.Garden.ambientOnly = true;
+            Material.all.Floor.specular = [0.05, 0.1, 0.15];
+            Material.all.Floor.illusive = 0.1;
+            // Material.all.Floor.ambient = [0.4, 0.3, 0.25];
+            Object.assign(Material.all.Clock, gold);
         }
 
         return scene;
