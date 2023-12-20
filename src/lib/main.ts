@@ -70,11 +70,11 @@ window.onmessage = ({ data }) => {
             function draw() {
                 imageData.data.set(pixels);
                 ctx.putImageData(imageData, 0, 0);
-                ctx.textAlign = "end";
-                ctx.textBaseline = "top";
-                ctx.fillStyle = "black";
-                ctx.font = (canvas.height / 40) + "px Arial";
-                ctx.fillText(hintTxt.join(", "), canvas.width - 10, 10);
+                // ctx.textAlign = "end";
+                // ctx.textBaseline = "top";
+                // ctx.fillStyle = "black";
+                // ctx.font = (canvas.height / 40) + "px Arial";
+                // ctx.fillText(hintTxt.join(", "), canvas.width - 10, 10);
                 requestAnimationFrame(draw);
             }
             requestAnimationFrame(draw);

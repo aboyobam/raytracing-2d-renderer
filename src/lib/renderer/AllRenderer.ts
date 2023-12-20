@@ -38,7 +38,7 @@ class AllRenderer extends BaseRenderer {
                 const incidenceDir = dir.neg();
                 const cosineThetaI = incidenceDir.dot(normal);
                 const sin2ThetaI = Math.max(0, 1 - cosineThetaI * cosineThetaI);
-                const sin2ThetaT = (n1 / n2) * (n1 / n2) * sin2ThetaI;
+                const sin2ThetaT = Math.min((n1 / n2) * (n1 / n2) * sin2ThetaI, 0.999);
     
                 if (sin2ThetaT < 1) {
                     const cosineThetaT = Math.sqrt(1 - sin2ThetaT);
@@ -47,7 +47,7 @@ class AllRenderer extends BaseRenderer {
             }
 
             const specularTarget = entering && (newStrengh[0] > 0 && newStrengh[1] > 0 && newStrengh[2] > 0) && this.calulatePixel(hit.point, hit.outDir, depth + 1);
-            const alphaTarget = refractedDirection && this.calulatePixel(hit.point, refractedDirection, depth + 1, backface == "none" ? "only" : "none");
+            const alphaTarget = refractedDirection && this.calulatePixel(hit.point, refractedDirection, depth + 1, "both");
 
             const [nr, ng, nb] = specularTarget || Array(3).fill(240);
             const [ar, ag, ab] = alphaTarget || Array(3).fill(240);

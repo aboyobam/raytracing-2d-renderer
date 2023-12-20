@@ -92,8 +92,13 @@ setup.gltf = function() {
             Material.all.Garden.ambientOnly = true;
             Material.all.Floor.specular = [0.05, 0.1, 0.15];
             Material.all.Floor.illusive = 0.1;
+            Material.all.DiamondOutside.refractiveIndex = 1.6;
+            Material.all.DiamondOutside.specular = [0.1, 0.1, 0.2];
+            Material.all.DiamondOutside.illusive = 0.6;
+            // Material.all.DiamondOutside.glossyness = 20;
             // Material.all.Floor.ambient = [0.4, 0.3, 0.25];
             Object.assign(Material.all.Clock, gold);
+            //Material.all.Clock.glossyness = 30;
         }
 
         return scene;
