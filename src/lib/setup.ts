@@ -86,7 +86,8 @@ setup.gltf = function() {
             Material.all.glass.glossyness = 30;
         }
 
-        if (_data.config.gltf == "mod.gltf" || _data.config.gltf == "final.gltf") {
+
+        if (_data.config.gltf == "final.gltf") {
             Material.all.Pottery.glossyness = 10;
             Material.all.Garden.ambient = [1, 1, 1];
             Material.all.Garden.ambientOnly = true;
@@ -98,7 +99,7 @@ setup.gltf = function() {
             // Material.all.DiamondOutside.glossyness = 20;
             // Material.all.Floor.ambient = [0.4, 0.3, 0.25];
             Object.assign(Material.all.Clock, gold);
-            //Material.all.Clock.glossyness = 30;
+            Material.all.Clock.glossyness = 30;
         }
 
         return scene;

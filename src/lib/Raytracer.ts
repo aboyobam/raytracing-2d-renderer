@@ -21,6 +21,7 @@ export default class Raytracer {
 
     *castRay(origin: Vector3, dir: Vector3, backfaces: Backfaces = "none"): IterableIterator<Intersection> {
         const normDir = dir.norm();
+        // backfaces = "both"; // DUMMY
 
         for (const face of this.optimizer.intersects(origin, normDir)) {
             // if (!intersectsBounds(origin, normDir, ...face.getBoundingBox())) {

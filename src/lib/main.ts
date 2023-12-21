@@ -53,6 +53,10 @@ window.onmessage = ({ data }) => {
             hintTxt.push(`Time: ${data.time.toFixed(0)}ms`);
         } else if (data.type == "aspect") {
             const canvas = document.createElement("canvas");
+            canvas.onclick = () => {
+                canvas.requestFullscreen({ navigationUI: "hide" });
+            }
+            
             canvas.width = config.renderer.width;
             canvas.height = config.renderer.height;
             const ctx = canvas.getContext("2d");

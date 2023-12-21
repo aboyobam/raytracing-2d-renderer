@@ -56,7 +56,7 @@ export default class PhotonMapper {
 
         const [hit] = this.rc.intersectOrder(origin, dir, opts.backfaces);
 
-        if (!hit) {
+        if (!hit || hit.face.material.ambientOnly) {
             return;
         }
 

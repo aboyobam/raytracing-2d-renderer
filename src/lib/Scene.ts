@@ -45,9 +45,6 @@ export default class Scene extends Object3D {
             }
         }
 
-        console.log("faces", this.faces);
-        
-
         // emmiting
         for (const mesh of this) {
             for (const face of mesh.geometry.faces) {
